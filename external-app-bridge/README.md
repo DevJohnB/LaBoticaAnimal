@@ -1,28 +1,28 @@
-# La Botica App Bridge
+# External App Bridge
 
 Este plugin de WordPress expone un conjunto de endpoints REST para que una aplicación externa pueda registrar y autenticar usuarios utilizando a WordPress como backend.
 
 ## Endpoints
 
-- `POST /wp-json/labotica/v1/register`
+- `POST /wp-json/external-app-bridge/v1/register`
   - Crea un nuevo usuario en WordPress.
   - Parámetros: `username`, `email`, `password`.
 
-- `POST /wp-json/labotica/v1/login`
+- `POST /wp-json/external-app-bridge/v1/login`
   - Autentica al usuario y devuelve un token.
   - Parámetros: `username`, `password`.
 
-- `POST /wp-json/labotica/v1/logout`
+- `POST /wp-json/external-app-bridge/v1/logout`
   - Revoca el token actual enviado en el encabezado `Authorization: Bearer <token>`.
 
-- `GET /wp-json/labotica/v1/validate-token`
+- `GET /wp-json/external-app-bridge/v1/validate-token`
   - Verifica el token enviado en el encabezado `Authorization: Bearer <token>` y devuelve los datos del usuario si es válido.
 
-- `POST /wp-json/labotica/v1/password-reset-request`
+- `POST /wp-json/external-app-bridge/v1/password-reset-request`
   - Envía un correo de recuperación de contraseña al usuario.
   - Parámetros: `username` o `email`.
 
-- `POST /wp-json/labotica/v1/password-reset`
+- `POST /wp-json/external-app-bridge/v1/password-reset`
   - Restablece la contraseña usando la clave recibida por correo.
   - Parámetros: `login`, `key`, `password`.
 
@@ -30,7 +30,7 @@ Todos los endpoints, con excepción de **login**, **register**, **password-reset
 
 ## Instalación
 
-1. Copiar la carpeta `labotica-app-bridge` en el directorio `wp-content/plugins/` de WordPress.
+1. Copiar la carpeta `external-app-bridge` en el directorio `wp-content/plugins/` de WordPress.
 2. Activar el plugin desde el panel de administración.
 
 ## Notas de seguridad

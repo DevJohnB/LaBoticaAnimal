@@ -1,6 +1,6 @@
 <?php
 /**
- * Plugin Name: La Botica App Bridge
+ * Plugin Name: External App Bridge
  * Description: REST endpoints for user registration and authentication, enabling mobile apps to use WordPress as backend.
  * Version: 1.0.0
  * Author: La Botica
@@ -11,7 +11,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-class LaBotica_App_Bridge {
+class External_App_Bridge {
 
     public function __construct() {
         add_action( 'rest_api_init', [ $this, 'register_routes' ] );
@@ -22,37 +22,37 @@ class LaBotica_App_Bridge {
      * Register custom REST API routes.
      */
     public function register_routes() {
-        register_rest_route( 'labotica/v1', '/register', [
+        register_rest_route( 'external-app-bridge/v1', '/register', [
             'methods'             => 'POST',
             'callback'            => [ $this, 'handle_register' ],
             'permission_callback' => '__return_true',
         ] );
 
-        register_rest_route( 'labotica/v1', '/login', [
+        register_rest_route( 'external-app-bridge/v1', '/login', [
             'methods'             => 'POST',
             'callback'            => [ $this, 'handle_login' ],
             'permission_callback' => '__return_true',
         ] );
 
-        register_rest_route( 'labotica/v1', '/logout', [
+        register_rest_route( 'external-app-bridge/v1', '/logout', [
             'methods'             => 'POST',
             'callback'            => [ $this, 'handle_logout' ],
             'permission_callback' => '__return_true',
         ] );
 
-        register_rest_route( 'labotica/v1', '/validate-token', [
+        register_rest_route( 'external-app-bridge/v1', '/validate-token', [
             'methods'             => 'GET',
             'callback'            => [ $this, 'handle_validate_token' ],
             'permission_callback' => '__return_true',
         ] );
 
-        register_rest_route( 'labotica/v1', '/password-reset-request', [
+        register_rest_route( 'external-app-bridge/v1', '/password-reset-request', [
             'methods'             => 'POST',
             'callback'            => [ $this, 'handle_password_reset_request' ],
             'permission_callback' => '__return_true',
         ] );
 
-        register_rest_route( 'labotica/v1', '/password-reset', [
+        register_rest_route( 'external-app-bridge/v1', '/password-reset', [
             'methods'             => 'POST',
             'callback'            => [ $this, 'handle_password_reset' ],
             'permission_callback' => '__return_true',
@@ -68,11 +68,11 @@ class LaBotica_App_Bridge {
         $password = $request->get_param( 'password' );
 
         if ( empty( $username ) || empty( $email ) || empty( $password ) ) {
-            return new WP_Error( 'missing_fields', __( 'Username, email and password are required.', 'labotica' ), [ 'status' => 400 ] );
+            return new WP_Error( 'missing_fields', __( 'Username, email and password are required.', 'external-app-bridge' ), [ 'status' => 400 ] );
         }
 
         if ( username_exists( $username ) || email_exists( $email ) ) {
-            return new WP_Error( 'user_exists', __( 'User already exists.', 'labotica' ), [ 'status' => 409 ] );
+            return new WP_Error( 'user_exists', __( 'User already exists.', 'external-app-bridge' ), [ 'status' => 409 ] );
         }
 
         $user_id = wp_create_user( $username, $password, $email );
@@ -94,7 +94,7 @@ class LaBotica_App_Bridge {
         $password = $request->get_param( 'password' );
 
         if ( empty( $username ) || empty( $password ) ) {
-            return new WP_Error( 'missing_fields', __( 'Username and password are required.', 'labotica' ), [ 'status' => 400 ] );
+            return new WP_Error( 'missing_fields', __( 'Username and password are required.', 'external-app-bridge' ), [ 'status' => 400 ] );
         }
 
         $user = wp_authenticate( $username, $password );
@@ -116,17 +116,17 @@ class LaBotica_App_Bridge {
     public function handle_logout( WP_REST_Request $request ) {
         $auth = $this->get_authorization_header();
         if ( ! preg_match( '/Bearer\\s(\\S+)/', $auth, $matches ) ) {
-            return new WP_Error( 'missing_token', __( 'Authorization header not found.', 'labotica' ), [ 'status' => 401 ] );
+            return new WP_Error( 'missing_token', __( 'Authorization header not found.', 'external-app-bridge' ), [ 'status' => 401 ] );
         }
 
         $token   = $matches[1];
         $payload = $this->decode_token( $token );
         if ( ! $payload ) {
-            return new WP_Error( 'invalid_token', __( 'Token is invalid.', 'labotica' ), [ 'status' => 401 ] );
+            return new WP_Error( 'invalid_token', __( 'Token is invalid.', 'external-app-bridge' ), [ 'status' => 401 ] );
         }
 
         $ttl = max( 1, $payload['exp'] - time() );
-        set_transient( 'labotica_revoked_' . md5( $token ), true, $ttl );
+        set_transient( 'external_app_bridge_revoked_' . md5( $token ), true, $ttl );
 
         return [ 'success' => true ];
     }
@@ -137,21 +137,21 @@ class LaBotica_App_Bridge {
     public function handle_validate_token( WP_REST_Request $request ) {
         $auth = $this->get_authorization_header();
         if ( ! preg_match( '/Bearer\\s(\\S+)/', $auth, $matches ) ) {
-            return new WP_Error( 'missing_token', __( 'Authorization header not found.', 'labotica' ), [ 'status' => 401 ] );
+            return new WP_Error( 'missing_token', __( 'Authorization header not found.', 'external-app-bridge' ), [ 'status' => 401 ] );
         }
 
         if ( $this->is_token_revoked( $matches[1] ) ) {
-            return new WP_Error( 'invalid_token', __( 'Token has been revoked.', 'labotica' ), [ 'status' => 401 ] );
+            return new WP_Error( 'invalid_token', __( 'Token has been revoked.', 'external-app-bridge' ), [ 'status' => 401 ] );
         }
 
         $payload = $this->decode_token( $matches[1] );
         if ( ! $payload || $payload['exp'] < time() ) {
-            return new WP_Error( 'invalid_token', __( 'Token is invalid or expired.', 'labotica' ), [ 'status' => 401 ] );
+            return new WP_Error( 'invalid_token', __( 'Token is invalid or expired.', 'external-app-bridge' ), [ 'status' => 401 ] );
         }
 
         $user = get_userdata( $payload['sub'] );
         if ( ! $user ) {
-            return new WP_Error( 'invalid_user', __( 'User not found.', 'labotica' ), [ 'status' => 401 ] );
+            return new WP_Error( 'invalid_user', __( 'User not found.', 'external-app-bridge' ), [ 'status' => 401 ] );
         }
 
         return [
@@ -169,7 +169,7 @@ class LaBotica_App_Bridge {
         $email    = sanitize_email( $request->get_param( 'email' ) );
 
         if ( empty( $username ) && empty( $email ) ) {
-            return new WP_Error( 'missing_fields', __( 'Username or email is required.', 'labotica' ), [ 'status' => 400 ] );
+            return new WP_Error( 'missing_fields', __( 'Username or email is required.', 'external-app-bridge' ), [ 'status' => 400 ] );
         }
 
         $user = null;
@@ -180,7 +180,7 @@ class LaBotica_App_Bridge {
         }
 
         if ( ! $user ) {
-            return new WP_Error( 'invalid_user', __( 'User not found.', 'labotica' ), [ 'status' => 404 ] );
+            return new WP_Error( 'invalid_user', __( 'User not found.', 'external-app-bridge' ), [ 'status' => 404 ] );
         }
 
         $result = retrieve_password( $user->user_login );
@@ -200,7 +200,7 @@ class LaBotica_App_Bridge {
         $password = $request->get_param( 'password' );
 
         if ( empty( $key ) || empty( $login ) || empty( $password ) ) {
-            return new WP_Error( 'missing_fields', __( 'Key, login and new password are required.', 'labotica' ), [ 'status' => 400 ] );
+            return new WP_Error( 'missing_fields', __( 'Key, login and new password are required.', 'external-app-bridge' ), [ 'status' => 400 ] );
         }
 
         $user = check_password_reset_key( $key, $login );
@@ -223,33 +223,33 @@ class LaBotica_App_Bridge {
 
         // Only secure our namespace routes.
         $route = isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '';
-        if ( strpos( $route, '/wp-json/labotica/v1/' ) === false ) {
+        if ( strpos( $route, '/wp-json/external-app-bridge/v1/' ) === false ) {
             return $result;
         }
 
         // Allow unauthenticated access to login, register and password reset endpoints.
         if (
-            false !== strpos( $route, '/wp-json/labotica/v1/login' ) ||
-            false !== strpos( $route, '/wp-json/labotica/v1/register' ) ||
-            false !== strpos( $route, '/wp-json/labotica/v1/password-reset' ) ||
-            false !== strpos( $route, '/wp-json/labotica/v1/password-reset-request' )
+            false !== strpos( $route, '/wp-json/external-app-bridge/v1/login' ) ||
+            false !== strpos( $route, '/wp-json/external-app-bridge/v1/register' ) ||
+            false !== strpos( $route, '/wp-json/external-app-bridge/v1/password-reset' ) ||
+            false !== strpos( $route, '/wp-json/external-app-bridge/v1/password-reset-request' )
         ) {
             return $result;
         }
 
         $auth = $this->get_authorization_header();
         if ( ! preg_match( '/Bearer\\s(\\S+)/', $auth, $matches ) ) {
-            return new WP_Error( 'rest_forbidden', __( 'Authentication required.', 'labotica' ), [ 'status' => 401 ] );
+            return new WP_Error( 'rest_forbidden', __( 'Authentication required.', 'external-app-bridge' ), [ 'status' => 401 ] );
         }
 
         $token = $matches[1];
         if ( $this->is_token_revoked( $token ) ) {
-            return new WP_Error( 'rest_forbidden', __( 'Token has been revoked.', 'labotica' ), [ 'status' => 401 ] );
+            return new WP_Error( 'rest_forbidden', __( 'Token has been revoked.', 'external-app-bridge' ), [ 'status' => 401 ] );
         }
 
         $payload = $this->decode_token( $token );
         if ( ! $payload || $payload['exp'] < time() ) {
-            return new WP_Error( 'rest_forbidden', __( 'Token is invalid or expired.', 'labotica' ), [ 'status' => 401 ] );
+            return new WP_Error( 'rest_forbidden', __( 'Token is invalid or expired.', 'external-app-bridge' ), [ 'status' => 401 ] );
         }
 
         wp_set_current_user( $payload['sub'] );
@@ -339,9 +339,9 @@ class LaBotica_App_Bridge {
      * Check if token has been revoked.
      */
     protected function is_token_revoked( $token ) {
-        return (bool) get_transient( 'labotica_revoked_' . md5( $token ) );
+        return (bool) get_transient( 'external_app_bridge_revoked_' . md5( $token ) );
     }
 }
 
-new LaBotica_App_Bridge();
+new External_App_Bridge();
 
