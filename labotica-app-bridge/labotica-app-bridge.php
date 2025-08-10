@@ -45,6 +45,18 @@ class LaBotica_App_Bridge {
             'callback'            => [ $this, 'handle_validate_token' ],
             'permission_callback' => '__return_true',
         ] );
+
+        register_rest_route( 'labotica/v1', '/password-reset-request', [
+            'methods'             => 'POST',
+            'callback'            => [ $this, 'handle_password_reset_request' ],
+            'permission_callback' => '__return_true',
+        ] );
+
+        register_rest_route( 'labotica/v1', '/password-reset', [
+            'methods'             => 'POST',
+            'callback'            => [ $this, 'handle_password_reset' ],
+            'permission_callback' => '__return_true',
+        ] );
     }
 
     /**
@@ -150,6 +162,58 @@ class LaBotica_App_Bridge {
     }
 
     /**
+     * Send password reset email to user.
+     */
+    public function handle_password_reset_request( WP_REST_Request $request ) {
+        $username = sanitize_user( $request->get_param( 'username' ) );
+        $email    = sanitize_email( $request->get_param( 'email' ) );
+
+        if ( empty( $username ) && empty( $email ) ) {
+            return new WP_Error( 'missing_fields', __( 'Username or email is required.', 'labotica' ), [ 'status' => 400 ] );
+        }
+
+        $user = null;
+        if ( ! empty( $username ) ) {
+            $user = get_user_by( 'login', $username );
+        } elseif ( ! empty( $email ) ) {
+            $user = get_user_by( 'email', $email );
+        }
+
+        if ( ! $user ) {
+            return new WP_Error( 'invalid_user', __( 'User not found.', 'labotica' ), [ 'status' => 404 ] );
+        }
+
+        $result = retrieve_password( $user->user_login );
+        if ( is_wp_error( $result ) ) {
+            return $result;
+        }
+
+        return [ 'success' => true ];
+    }
+
+    /**
+     * Reset user password using key and login.
+     */
+    public function handle_password_reset( WP_REST_Request $request ) {
+        $key      = sanitize_text_field( $request->get_param( 'key' ) );
+        $login    = sanitize_user( $request->get_param( 'login' ) );
+        $password = $request->get_param( 'password' );
+
+        if ( empty( $key ) || empty( $login ) || empty( $password ) ) {
+            return new WP_Error( 'missing_fields', __( 'Key, login and new password are required.', 'labotica' ), [ 'status' => 400 ] );
+        }
+
+        $user = check_password_reset_key( $key, $login );
+        if ( is_wp_error( $user ) ) {
+            return $user;
+        }
+
+        reset_password( $user, $password );
+
+        return [ 'success' => true ];
+    }
+
+    /**
      * Authenticate request for protected routes.
      */
     public function authenticate_request( $result ) {
@@ -163,8 +227,13 @@ class LaBotica_App_Bridge {
             return $result;
         }
 
-        // Allow unauthenticated access to login and register endpoints.
-        if ( false !== strpos( $route, '/wp-json/labotica/v1/login' ) || false !== strpos( $route, '/wp-json/labotica/v1/register' ) ) {
+        // Allow unauthenticated access to login, register and password reset endpoints.
+        if (
+            false !== strpos( $route, '/wp-json/labotica/v1/login' ) ||
+            false !== strpos( $route, '/wp-json/labotica/v1/register' ) ||
+            false !== strpos( $route, '/wp-json/labotica/v1/password-reset' ) ||
+            false !== strpos( $route, '/wp-json/labotica/v1/password-reset-request' )
+        ) {
             return $result;
         }
 

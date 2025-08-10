@@ -18,7 +18,15 @@ Este plugin de WordPress expone un conjunto de endpoints REST para que una aplic
 - `GET /wp-json/labotica/v1/validate-token`
   - Verifica el token enviado en el encabezado `Authorization: Bearer <token>` y devuelve los datos del usuario si es válido.
 
-Todos los endpoints, con excepción de **login** y **register**, requieren enviar el token en el encabezado `Authorization`.
+- `POST /wp-json/labotica/v1/password-reset-request`
+  - Envía un correo de recuperación de contraseña al usuario.
+  - Parámetros: `username` o `email`.
+
+- `POST /wp-json/labotica/v1/password-reset`
+  - Restablece la contraseña usando la clave recibida por correo.
+  - Parámetros: `login`, `key`, `password`.
+
+Todos los endpoints, con excepción de **login**, **register**, **password-reset-request** y **password-reset**, requieren enviar el token en el encabezado `Authorization`.
 
 ## Instalación
 
