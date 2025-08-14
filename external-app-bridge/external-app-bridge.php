@@ -63,16 +63,26 @@ class External_App_Bridge {
      * Handle user registration.
      */
     public function handle_register( WP_REST_Request $request ) {
-        $username = sanitize_user( $request->get_param( 'username' ) );
         $email    = sanitize_email( $request->get_param( 'email' ) );
         $password = $request->get_param( 'password' );
 
-        if ( empty( $username ) || empty( $email ) || empty( $password ) ) {
-            return new WP_Error( 'missing_fields', __( 'Username, email and password are required.', 'external-app-bridge' ), [ 'status' => 400 ] );
+        if ( empty( $email ) || empty( $password ) ) {
+            return new WP_Error( 'missing_fields', __( 'Email and password are required.', 'external-app-bridge' ), [ 'status' => 400 ] );
         }
 
-        if ( username_exists( $username ) || email_exists( $email ) ) {
+        if ( email_exists( $email ) ) {
             return new WP_Error( 'user_exists', __( 'User already exists.', 'external-app-bridge' ), [ 'status' => 409 ] );
+        }
+
+        $base_username = sanitize_user( current( explode( '@', $email ) ) );
+        if ( empty( $base_username ) ) {
+            $base_username = 'user';
+        }
+        $username = $base_username;
+        $i        = 1;
+        while ( username_exists( $username ) ) {
+            $username = $base_username . '_' . $i;
+            $i++;
         }
 
         $user_id = wp_create_user( $username, $password, $email );
@@ -81,8 +91,9 @@ class External_App_Bridge {
         }
 
         return [
-            'success' => true,
-            'user_id' => $user_id,
+            'success'  => true,
+            'user_id'  => $user_id,
+            'username' => $username,
         ];
     }
 
@@ -91,10 +102,19 @@ class External_App_Bridge {
      */
     public function handle_login( WP_REST_Request $request ) {
         $username = sanitize_user( $request->get_param( 'username' ) );
+        $email    = sanitize_email( $request->get_param( 'email' ) );
         $password = $request->get_param( 'password' );
 
-        if ( empty( $username ) || empty( $password ) ) {
-            return new WP_Error( 'missing_fields', __( 'Username and password are required.', 'external-app-bridge' ), [ 'status' => 400 ] );
+        if ( empty( $password ) || ( empty( $username ) && empty( $email ) ) ) {
+            return new WP_Error( 'missing_fields', __( 'Email or username and password are required.', 'external-app-bridge' ), [ 'status' => 400 ] );
+        }
+
+        if ( ! empty( $email ) ) {
+            $user_obj = get_user_by( 'email', $email );
+            if ( ! $user_obj ) {
+                return new WP_Error( 'invalid_credentials', __( 'Invalid email or password.', 'external-app-bridge' ), [ 'status' => 401 ] );
+            }
+            $username = $user_obj->user_login;
         }
 
         $user = wp_authenticate( $username, $password );

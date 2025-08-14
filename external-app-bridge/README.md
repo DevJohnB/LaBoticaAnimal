@@ -6,11 +6,12 @@ Este plugin de WordPress expone un conjunto de endpoints REST para que una aplic
 
 - `POST /wp-json/external-app-bridge/v1/register`
   - Crea un nuevo usuario en WordPress.
-  - Parámetros: `username`, `email`, `password`.
+  - Parámetros: `email`, `password`.
+  - El nombre de usuario se genera automáticamente y se devuelve en la respuesta.
 
 - `POST /wp-json/external-app-bridge/v1/login`
   - Autentica al usuario y devuelve un token.
-  - Parámetros: `username`, `password`.
+  - Parámetros: `email` o `username`, `password`.
 
 - `POST /wp-json/external-app-bridge/v1/logout`
   - Revoca el token actual enviado en el encabezado `Authorization: Bearer <token>`.
