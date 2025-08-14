@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PetIA</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="login-view">
+    <h1>PetIA</h1>
+    <form id="login-form">
+      <label>Email
+        <input type="email" id="email" required>
+      </label>
+      <label>Contraseña
+        <input type="password" id="password" required>
+      </label>
+      <button type="submit">Ingresar</button>
+    </form>
+    <p id="login-error" class="error"></p>
+  </div>
+  <div id="chat-view" class="hidden">
+    <iframe id="chat-frame" title="Chat"></iframe>
+    <div class="voice-controls">
+      <button id="start-voice">Hablar</button>
+      <textarea id="voice-output" readonly></textarea>
+    </div>
+  </div>
+  <script src="config.js"></script>
+  <script src="main.js"></script>
+</body>
+</html>
