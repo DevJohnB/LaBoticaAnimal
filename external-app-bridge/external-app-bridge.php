@@ -57,6 +57,18 @@ class External_App_Bridge {
             'callback'            => [ $this, 'handle_password_reset' ],
             'permission_callback' => '__return_true',
         ] );
+
+        register_rest_route( 'external-app-bridge/v1', '/profile', [
+            'methods'             => 'GET',
+            'callback'            => [ $this, 'handle_get_profile' ],
+            'permission_callback' => '__return_true',
+        ] );
+
+        register_rest_route( 'external-app-bridge/v1', '/profile', [
+            'methods'             => 'POST',
+            'callback'            => [ $this, 'handle_update_profile' ],
+            'permission_callback' => '__return_true',
+        ] );
     }
 
     /**
@@ -229,6 +241,80 @@ class External_App_Bridge {
         }
 
         reset_password( $user, $password );
+
+        return [ 'success' => true ];
+    }
+
+    /**
+     * Retrieve optional user profile fields.
+     */
+    public function handle_get_profile( WP_REST_Request $request ) {
+        $user_id = get_current_user_id();
+        if ( ! $user_id ) {
+            return new WP_Error( 'invalid_user', __( 'User not found.', 'external-app-bridge' ), [ 'status' => 401 ] );
+        }
+
+        $user = get_userdata( $user_id );
+
+        return [
+            'username'    => $user->user_login,
+            'email'       => $user->user_email,
+            'first_name'  => get_user_meta( $user_id, 'first_name', true ),
+            'last_name'   => get_user_meta( $user_id, 'last_name', true ),
+            'nickname'    => get_user_meta( $user_id, 'nickname', true ),
+            'description' => get_user_meta( $user_id, 'description', true ),
+            'user_url'    => $user->user_url,
+            'display_name'=> $user->display_name,
+        ];
+    }
+
+    /**
+     * Update optional user profile fields.
+     */
+    public function handle_update_profile( WP_REST_Request $request ) {
+        $user_id = get_current_user_id();
+        if ( ! $user_id ) {
+            return new WP_Error( 'invalid_user', __( 'User not found.', 'external-app-bridge' ), [ 'status' => 401 ] );
+        }
+
+        $meta_fields = [ 'first_name', 'last_name', 'nickname', 'description' ];
+        $updated     = false;
+
+        foreach ( $meta_fields as $field ) {
+            $value = $request->get_param( $field );
+            if ( null !== $value ) {
+                $updated = true;
+                if ( 'description' === $field ) {
+                    update_user_meta( $user_id, $field, sanitize_textarea_field( $value ) );
+                } else {
+                    update_user_meta( $user_id, $field, sanitize_text_field( $value ) );
+                }
+            }
+        }
+
+        $userdata = [ 'ID' => $user_id ];
+        $user_url = $request->get_param( 'user_url' );
+        if ( null !== $user_url ) {
+            $updated             = true;
+            $userdata['user_url'] = esc_url_raw( $user_url );
+        }
+
+        $display_name = $request->get_param( 'display_name' );
+        if ( null !== $display_name ) {
+            $updated                = true;
+            $userdata['display_name'] = sanitize_text_field( $display_name );
+        }
+
+        if ( count( $userdata ) > 1 ) {
+            $result = wp_update_user( $userdata );
+            if ( is_wp_error( $result ) ) {
+                return $result;
+            }
+        }
+
+        if ( ! $updated ) {
+            return new WP_Error( 'no_fields', __( 'No profile fields provided.', 'external-app-bridge' ), [ 'status' => 400 ] );
+        }
 
         return [ 'success' => true ];
     }

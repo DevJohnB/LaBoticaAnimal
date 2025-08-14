@@ -27,6 +27,13 @@ Este plugin de WordPress expone un conjunto de endpoints REST para que una aplic
   - Restablece la contraseña usando la clave recibida por correo.
   - Parámetros: `login`, `key`, `password`.
 
+- `GET /wp-json/external-app-bridge/v1/profile`
+  - Devuelve la información opcional del perfil del usuario autenticado.
+
+- `POST /wp-json/external-app-bridge/v1/profile`
+  - Actualiza los campos opcionales del perfil del usuario autenticado.
+  - Parámetros (opcionales): `first_name`, `last_name`, `nickname`, `description`, `user_url`, `display_name`.
+
 Todos los endpoints, con excepción de **login**, **register**, **password-reset-request** y **password-reset**, requieren enviar el token en el encabezado `Authorization`.
 
 ## Instalación
