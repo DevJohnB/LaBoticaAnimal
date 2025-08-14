@@ -1,6 +1,6 @@
 <?php
 /**
- * Plugin Name: External App Bridge
+ * Plugin Name: PetIA External Bridge
  * Description: REST endpoints for user registration and authentication, enabling mobile apps to use WordPress as backend.
  * Version: 1.0.0
  * Author: La Botica
@@ -11,72 +11,85 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-class External_App_Bridge {
+class PetIA_External_Bridge {
 
     public function __construct() {
         add_action( 'rest_api_init', [ $this, 'register_routes' ] );
         add_filter( 'rest_authentication_errors', [ $this, 'authenticate_request' ] );
+
+        if ( is_admin() ) {
+            add_action( 'admin_menu', [ $this, 'register_admin_page' ] );
+        }
+    }
+
+    public static function activate() {
+        global $wpdb;
+        $table_name      = $wpdb->prefix . 'petia_external_bridge_access';
+        $charset_collate = $wpdb->get_charset_collate();
+        $sql             = "CREATE TABLE $table_name ( user_id BIGINT(20) UNSIGNED NOT NULL PRIMARY KEY, allowed TINYINT(1) NOT NULL DEFAULT 1 ) $charset_collate;";
+        require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+        dbDelta( $sql );
     }
 
     /**
      * Register custom REST API routes.
      */
     public function register_routes() {
-        register_rest_route( 'external-app-bridge/v1', '/register', [
+        register_rest_route( 'petia-external-bridge/v1', '/register', [
             'methods'             => 'POST',
             'callback'            => [ $this, 'handle_register' ],
             'permission_callback' => '__return_true',
         ] );
 
-        register_rest_route( 'external-app-bridge/v1', '/login', [
+        register_rest_route( 'petia-external-bridge/v1', '/login', [
             'methods'             => 'POST',
             'callback'            => [ $this, 'handle_login' ],
             'permission_callback' => '__return_true',
         ] );
 
-        register_rest_route( 'external-app-bridge/v1', '/logout', [
+        register_rest_route( 'petia-external-bridge/v1', '/logout', [
             'methods'             => 'POST',
             'callback'            => [ $this, 'handle_logout' ],
             'permission_callback' => '__return_true',
         ] );
 
-        register_rest_route( 'external-app-bridge/v1', '/validate-token', [
+        register_rest_route( 'petia-external-bridge/v1', '/validate-token', [
             'methods'             => 'GET',
             'callback'            => [ $this, 'handle_validate_token' ],
             'permission_callback' => '__return_true',
         ] );
 
-        register_rest_route( 'external-app-bridge/v1', '/password-reset-request', [
+        register_rest_route( 'petia-external-bridge/v1', '/password-reset-request', [
             'methods'             => 'POST',
             'callback'            => [ $this, 'handle_password_reset_request' ],
             'permission_callback' => '__return_true',
         ] );
 
-        register_rest_route( 'external-app-bridge/v1', '/password-reset', [
+        register_rest_route( 'petia-external-bridge/v1', '/password-reset', [
             'methods'             => 'POST',
             'callback'            => [ $this, 'handle_password_reset' ],
             'permission_callback' => '__return_true',
         ] );
 
-        register_rest_route( 'external-app-bridge/v1', '/profile', [
+        register_rest_route( 'petia-external-bridge/v1', '/profile', [
             'methods'             => 'GET',
             'callback'            => [ $this, 'handle_get_profile' ],
             'permission_callback' => '__return_true',
         ] );
 
-        register_rest_route( 'external-app-bridge/v1', '/profile', [
+        register_rest_route( 'petia-external-bridge/v1', '/profile', [
             'methods'             => 'POST',
             'callback'            => [ $this, 'handle_update_profile' ],
             'permission_callback' => '__return_true',
         ] );
 
-        register_rest_route( 'external-app-bridge/v1', '/order/(?P<id>\d+)/addresses', [
+        register_rest_route( 'petia-external-bridge/v1', '/order/(?P<id>\d+)/addresses', [
             'methods'             => 'GET',
             'callback'            => [ $this, 'handle_get_order_addresses' ],
             'permission_callback' => '__return_true',
         ] );
 
-        register_rest_route( 'external-app-bridge/v1', '/order/(?P<id>\d+)/addresses', [
+        register_rest_route( 'petia-external-bridge/v1', '/order/(?P<id>\d+)/addresses', [
             'methods'             => 'POST',
             'callback'            => [ $this, 'handle_update_order_addresses' ],
             'permission_callback' => '__return_true',
@@ -91,11 +104,11 @@ class External_App_Bridge {
         $password = $request->get_param( 'password' );
 
         if ( empty( $email ) || empty( $password ) ) {
-            return new WP_Error( 'missing_fields', __( 'Email and password are required.', 'external-app-bridge' ), [ 'status' => 400 ] );
+            return new WP_Error( 'missing_fields', __( 'Email and password are required.', 'petia-external-bridge' ), [ 'status' => 400 ] );
         }
 
         if ( email_exists( $email ) ) {
-            return new WP_Error( 'user_exists', __( 'User already exists.', 'external-app-bridge' ), [ 'status' => 409 ] );
+            return new WP_Error( 'user_exists', __( 'User already exists.', 'petia-external-bridge' ), [ 'status' => 409 ] );
         }
 
         $base_username = sanitize_user( current( explode( '@', $email ) ) );
@@ -130,13 +143,13 @@ class External_App_Bridge {
         $password = $request->get_param( 'password' );
 
         if ( empty( $password ) || ( empty( $username ) && empty( $email ) ) ) {
-            return new WP_Error( 'missing_fields', __( 'Email or username and password are required.', 'external-app-bridge' ), [ 'status' => 400 ] );
+            return new WP_Error( 'missing_fields', __( 'Email or username and password are required.', 'petia-external-bridge' ), [ 'status' => 400 ] );
         }
 
         if ( ! empty( $email ) ) {
             $user_obj = get_user_by( 'email', $email );
             if ( ! $user_obj ) {
-                return new WP_Error( 'invalid_credentials', __( 'Invalid email or password.', 'external-app-bridge' ), [ 'status' => 401 ] );
+                return new WP_Error( 'invalid_credentials', __( 'Invalid email or password.', 'petia-external-bridge' ), [ 'status' => 401 ] );
             }
             $username = $user_obj->user_login;
         }
@@ -144,6 +157,10 @@ class External_App_Bridge {
         $user = wp_authenticate( $username, $password );
         if ( is_wp_error( $user ) ) {
             return $user;
+        }
+
+        if ( ! $this->user_has_access( $user->ID ) ) {
+            return new WP_Error( 'access_denied', __( 'User access to API is disabled.', 'petia-external-bridge' ), [ 'status' => 403 ] );
         }
 
         $token = $this->generate_token( $user->ID );
@@ -160,17 +177,17 @@ class External_App_Bridge {
     public function handle_logout( WP_REST_Request $request ) {
         $auth = $this->get_authorization_header();
         if ( ! preg_match( '/Bearer\\s(\\S+)/', $auth, $matches ) ) {
-            return new WP_Error( 'missing_token', __( 'Authorization header not found.', 'external-app-bridge' ), [ 'status' => 401 ] );
+            return new WP_Error( 'missing_token', __( 'Authorization header not found.', 'petia-external-bridge' ), [ 'status' => 401 ] );
         }
 
         $token   = $matches[1];
         $payload = $this->decode_token( $token );
         if ( ! $payload ) {
-            return new WP_Error( 'invalid_token', __( 'Token is invalid.', 'external-app-bridge' ), [ 'status' => 401 ] );
+            return new WP_Error( 'invalid_token', __( 'Token is invalid.', 'petia-external-bridge' ), [ 'status' => 401 ] );
         }
 
         $ttl = max( 1, $payload['exp'] - time() );
-        set_transient( 'external_app_bridge_revoked_' . md5( $token ), true, $ttl );
+        set_transient( 'petia_external_bridge_revoked_' . md5( $token ), true, $ttl );
 
         return [ 'success' => true ];
     }
@@ -181,27 +198,31 @@ class External_App_Bridge {
     public function handle_validate_token( WP_REST_Request $request ) {
         $auth = $this->get_authorization_header();
         if ( ! preg_match( '/Bearer\\s(\\S+)/', $auth, $matches ) ) {
-            return new WP_Error( 'missing_token', __( 'Authorization header not found.', 'external-app-bridge' ), [ 'status' => 401 ] );
+            return new WP_Error( 'missing_token', __( 'Authorization header not found.', 'petia-external-bridge' ), [ 'status' => 401 ] );
         }
 
         if ( $this->is_token_revoked( $matches[1] ) ) {
-            return new WP_Error( 'invalid_token', __( 'Token has been revoked.', 'external-app-bridge' ), [ 'status' => 401 ] );
+            return new WP_Error( 'invalid_token', __( 'Token has been revoked.', 'petia-external-bridge' ), [ 'status' => 401 ] );
         }
 
         $payload = $this->decode_token( $matches[1] );
         if ( ! $payload || $payload['exp'] < time() ) {
-            return new WP_Error( 'invalid_token', __( 'Token is invalid or expired.', 'external-app-bridge' ), [ 'status' => 401 ] );
+            return new WP_Error( 'invalid_token', __( 'Token is invalid or expired.', 'petia-external-bridge' ), [ 'status' => 401 ] );
         }
 
         $user = get_userdata( $payload['sub'] );
         if ( ! $user ) {
-            return new WP_Error( 'invalid_user', __( 'User not found.', 'external-app-bridge' ), [ 'status' => 401 ] );
+            return new WP_Error( 'invalid_user', __( 'User not found.', 'petia-external-bridge' ), [ 'status' => 401 ] );
+        }
+
+        if ( ! $this->user_has_access( $user->ID ) ) {
+            return new WP_Error( 'access_denied', __( 'User access to API is disabled.', 'petia-external-bridge' ), [ 'status' => 403 ] );
         }
 
         return [
-            'user_id' => $user->ID,
-            'username' => $user->user_login,
-            'email' => $user->user_email,
+            'user_id'   => $user->ID,
+            'username'  => $user->user_login,
+            'email'     => $user->user_email,
         ];
     }
 
@@ -213,7 +234,7 @@ class External_App_Bridge {
         $email    = sanitize_email( $request->get_param( 'email' ) );
 
         if ( empty( $username ) && empty( $email ) ) {
-            return new WP_Error( 'missing_fields', __( 'Username or email is required.', 'external-app-bridge' ), [ 'status' => 400 ] );
+            return new WP_Error( 'missing_fields', __( 'Username or email is required.', 'petia-external-bridge' ), [ 'status' => 400 ] );
         }
 
         $user = null;
@@ -224,7 +245,7 @@ class External_App_Bridge {
         }
 
         if ( ! $user ) {
-            return new WP_Error( 'invalid_user', __( 'User not found.', 'external-app-bridge' ), [ 'status' => 404 ] );
+            return new WP_Error( 'invalid_user', __( 'User not found.', 'petia-external-bridge' ), [ 'status' => 404 ] );
         }
 
         $result = retrieve_password( $user->user_login );
@@ -244,7 +265,7 @@ class External_App_Bridge {
         $password = $request->get_param( 'password' );
 
         if ( empty( $key ) || empty( $login ) || empty( $password ) ) {
-            return new WP_Error( 'missing_fields', __( 'Key, login and new password are required.', 'external-app-bridge' ), [ 'status' => 400 ] );
+            return new WP_Error( 'missing_fields', __( 'Key, login and new password are required.', 'petia-external-bridge' ), [ 'status' => 400 ] );
         }
 
         $user = check_password_reset_key( $key, $login );
@@ -263,7 +284,7 @@ class External_App_Bridge {
     public function handle_get_profile( WP_REST_Request $request ) {
         $user_id = get_current_user_id();
         if ( ! $user_id ) {
-            return new WP_Error( 'invalid_user', __( 'User not found.', 'external-app-bridge' ), [ 'status' => 401 ] );
+            return new WP_Error( 'invalid_user', __( 'User not found.', 'petia-external-bridge' ), [ 'status' => 401 ] );
         }
 
         $user = get_userdata( $user_id );
@@ -286,7 +307,7 @@ class External_App_Bridge {
     public function handle_update_profile( WP_REST_Request $request ) {
         $user_id = get_current_user_id();
         if ( ! $user_id ) {
-            return new WP_Error( 'invalid_user', __( 'User not found.', 'external-app-bridge' ), [ 'status' => 401 ] );
+            return new WP_Error( 'invalid_user', __( 'User not found.', 'petia-external-bridge' ), [ 'status' => 401 ] );
         }
 
         $meta_fields = [ 'first_name', 'last_name', 'nickname', 'description' ];
@@ -325,7 +346,7 @@ class External_App_Bridge {
         }
 
         if ( ! $updated ) {
-            return new WP_Error( 'no_fields', __( 'No profile fields provided.', 'external-app-bridge' ), [ 'status' => 400 ] );
+            return new WP_Error( 'no_fields', __( 'No profile fields provided.', 'petia-external-bridge' ), [ 'status' => 400 ] );
         }
 
         return [ 'success' => true ];
@@ -336,18 +357,18 @@ class External_App_Bridge {
      */
     public function handle_get_order_addresses( WP_REST_Request $request ) {
         if ( ! function_exists( 'wc_get_order' ) ) {
-            return new WP_Error( 'woocommerce_missing', __( 'WooCommerce not available.', 'external-app-bridge' ), [ 'status' => 500 ] );
+            return new WP_Error( 'woocommerce_missing', __( 'WooCommerce not available.', 'petia-external-bridge' ), [ 'status' => 500 ] );
         }
 
         $order_id = absint( $request['id'] );
         $order    = wc_get_order( $order_id );
         if ( ! $order ) {
-            return new WP_Error( 'invalid_order', __( 'Order not found.', 'external-app-bridge' ), [ 'status' => 404 ] );
+            return new WP_Error( 'invalid_order', __( 'Order not found.', 'petia-external-bridge' ), [ 'status' => 404 ] );
         }
 
         $user_id = get_current_user_id();
         if ( $order->get_user_id() !== $user_id ) {
-            return new WP_Error( 'forbidden', __( 'You are not allowed to access this order.', 'external-app-bridge' ), [ 'status' => 403 ] );
+            return new WP_Error( 'forbidden', __( 'You are not allowed to access this order.', 'petia-external-bridge' ), [ 'status' => 403 ] );
         }
 
         return [
@@ -361,25 +382,25 @@ class External_App_Bridge {
      */
     public function handle_update_order_addresses( WP_REST_Request $request ) {
         if ( ! function_exists( 'wc_get_order' ) ) {
-            return new WP_Error( 'woocommerce_missing', __( 'WooCommerce not available.', 'external-app-bridge' ), [ 'status' => 500 ] );
+            return new WP_Error( 'woocommerce_missing', __( 'WooCommerce not available.', 'petia-external-bridge' ), [ 'status' => 500 ] );
         }
 
         $order_id = absint( $request['id'] );
         $order    = wc_get_order( $order_id );
         if ( ! $order ) {
-            return new WP_Error( 'invalid_order', __( 'Order not found.', 'external-app-bridge' ), [ 'status' => 404 ] );
+            return new WP_Error( 'invalid_order', __( 'Order not found.', 'petia-external-bridge' ), [ 'status' => 404 ] );
         }
 
         $user_id = get_current_user_id();
         if ( $order->get_user_id() !== $user_id ) {
-            return new WP_Error( 'forbidden', __( 'You are not allowed to update this order.', 'external-app-bridge' ), [ 'status' => 403 ] );
+            return new WP_Error( 'forbidden', __( 'You are not allowed to update this order.', 'petia-external-bridge' ), [ 'status' => 403 ] );
         }
 
         $billing  = $request->get_param( 'billing' );
         $shipping = $request->get_param( 'shipping' );
 
         if ( empty( $billing ) && empty( $shipping ) ) {
-            return new WP_Error( 'no_fields', __( 'No address fields provided.', 'external-app-bridge' ), [ 'status' => 400 ] );
+            return new WP_Error( 'no_fields', __( 'No address fields provided.', 'petia-external-bridge' ), [ 'status' => 400 ] );
         }
 
         if ( ! empty( $billing ) && is_array( $billing ) ) {
@@ -407,36 +428,40 @@ class External_App_Bridge {
 
         // Only secure our namespace routes.
         $route = isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '';
-        if ( strpos( $route, '/wp-json/external-app-bridge/v1/' ) === false ) {
+        if ( strpos( $route, '/wp-json/petia-external-bridge/v1/' ) === false ) {
             return $result;
         }
 
         // Allow unauthenticated access to login, register and password reset endpoints.
         if (
-            false !== strpos( $route, '/wp-json/external-app-bridge/v1/login' ) ||
-            false !== strpos( $route, '/wp-json/external-app-bridge/v1/register' ) ||
-            false !== strpos( $route, '/wp-json/external-app-bridge/v1/password-reset' ) ||
-            false !== strpos( $route, '/wp-json/external-app-bridge/v1/password-reset-request' )
+            false !== strpos( $route, '/wp-json/petia-external-bridge/v1/login' ) ||
+            false !== strpos( $route, '/wp-json/petia-external-bridge/v1/register' ) ||
+            false !== strpos( $route, '/wp-json/petia-external-bridge/v1/password-reset' ) ||
+            false !== strpos( $route, '/wp-json/petia-external-bridge/v1/password-reset-request' )
         ) {
             return $result;
         }
 
         $auth = $this->get_authorization_header();
         if ( ! preg_match( '/Bearer\\s(\\S+)/', $auth, $matches ) ) {
-            return new WP_Error( 'rest_forbidden', __( 'Authentication required.', 'external-app-bridge' ), [ 'status' => 401 ] );
+            return new WP_Error( 'rest_forbidden', __( 'Authentication required.', 'petia-external-bridge' ), [ 'status' => 401 ] );
         }
 
         $token = $matches[1];
         if ( $this->is_token_revoked( $token ) ) {
-            return new WP_Error( 'rest_forbidden', __( 'Token has been revoked.', 'external-app-bridge' ), [ 'status' => 401 ] );
+            return new WP_Error( 'rest_forbidden', __( 'Token has been revoked.', 'petia-external-bridge' ), [ 'status' => 401 ] );
         }
 
         $payload = $this->decode_token( $token );
         if ( ! $payload || $payload['exp'] < time() ) {
-            return new WP_Error( 'rest_forbidden', __( 'Token is invalid or expired.', 'external-app-bridge' ), [ 'status' => 401 ] );
+            return new WP_Error( 'rest_forbidden', __( 'Token is invalid or expired.', 'petia-external-bridge' ), [ 'status' => 401 ] );
         }
 
         wp_set_current_user( $payload['sub'] );
+
+        if ( ! $this->user_has_access( $payload['sub'] ) ) {
+            return new WP_Error( 'rest_forbidden', __( 'User access to API is disabled.', 'petia-external-bridge' ), [ 'status' => 403 ] );
+        }
 
         return $result;
     }
@@ -523,9 +548,58 @@ class External_App_Bridge {
      * Check if token has been revoked.
      */
     protected function is_token_revoked( $token ) {
-        return (bool) get_transient( 'external_app_bridge_revoked_' . md5( $token ) );
+        return (bool) get_transient( 'petia_external_bridge_revoked_' . md5( $token ) );
+    }
+
+    protected function user_has_access( $user_id ) {
+        global $wpdb;
+        $table   = $wpdb->prefix . 'petia_external_bridge_access';
+        $allowed = $wpdb->get_var( $wpdb->prepare( "SELECT allowed FROM $table WHERE user_id = %d", $user_id ) );
+        if ( null === $allowed ) {
+            return true;
+        }
+        return (bool) $allowed;
+    }
+
+    public function register_admin_page() {
+        add_users_page(
+            __( 'PetIA External Bridge Access', 'petia-external-bridge' ),
+            __( 'PetIA Bridge Access', 'petia-external-bridge' ),
+            'manage_options',
+            'petia-external-bridge-access',
+            [ $this, 'render_access_page' ]
+        );
+    }
+
+    public function render_access_page() {
+        if ( isset( $_POST['petia_access_nonce'] ) && wp_verify_nonce( $_POST['petia_access_nonce'], 'petia_save_access' ) ) {
+            $users = get_users( [ 'fields' => [ 'ID' ] ] );
+            global $wpdb;
+            $table = $wpdb->prefix . 'petia_external_bridge_access';
+            foreach ( $users as $user ) {
+                $allowed = isset( $_POST['access'][ $user->ID ] ) ? 1 : 0;
+                $wpdb->replace( $table, [ 'user_id' => $user->ID, 'allowed' => $allowed ], [ '%d', '%d' ] );
+            }
+            echo '<div class="updated"><p>' . esc_html__( 'Settings saved.', 'petia-external-bridge' ) . '</p></div>';
+        }
+
+        $users = get_users();
+        global $wpdb;
+        $table = $wpdb->prefix . 'petia_external_bridge_access';
+
+        echo '<div class="wrap"><h1>' . esc_html__( 'PetIA External Bridge Access', 'petia-external-bridge' ) . '</h1>';
+        echo '<form method="post">';
+        wp_nonce_field( 'petia_save_access', 'petia_access_nonce' );
+        echo '<table class="widefat"><thead><tr><th>' . esc_html__( 'User', 'petia-external-bridge' ) . '</th><th>' . esc_html__( 'Allowed', 'petia-external-bridge' ) . '</th></tr></thead><tbody>';
+        foreach ( $users as $user ) {
+            $allowed = $wpdb->get_var( $wpdb->prepare( "SELECT allowed FROM $table WHERE user_id = %d", $user->ID ) );
+            $checked = ( null === $allowed || $allowed ) ? 'checked' : '';
+            echo '<tr><td>' . esc_html( $user->user_login ) . '</td><td><input type="checkbox" name="access[' . intval( $user->ID ) . ']" value="1" ' . $checked . '></td></tr>';
+        }
+        echo '</tbody></table><p><input type="submit" class="button-primary" value="' . esc_attr__( 'Save Changes', 'petia-external-bridge' ) . '"></p></form></div>';
     }
 }
 
-new External_App_Bridge();
+register_activation_hook( __FILE__, [ 'PetIA_External_Bridge', 'activate' ] );
+new PetIA_External_Bridge();
 
