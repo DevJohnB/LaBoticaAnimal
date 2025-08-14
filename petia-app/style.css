@@ -48,6 +48,16 @@ button:hover {
   border: 1px solid #ccc;
 }
 
+nav {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+nav button {
+  flex: 1;
+}
+
 .voice-controls {
   margin-top: 1rem;
 }

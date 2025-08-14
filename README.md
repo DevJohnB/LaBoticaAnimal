@@ -5,6 +5,7 @@ This repository contains the frontend code for the **PetIA** application. The ap
 ## Features
 - Email/password login against WordPress
 - Embeds n8n chat in an iframe
+- View personal profile information with logout option
 - Optional voice-to-text support via the Web Speech API
 - Prepared for packaging as a mobile application using [Capacitor](https://capacitorjs.com/)
 

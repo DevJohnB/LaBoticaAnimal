@@ -11,6 +11,16 @@ async function login(email, password) {
   return res.json();
 }
 
+async function fetchProfile(token) {
+  const res = await fetch(`${CONFIG.apiBase}/wp-json/petia-app-bridge/v1/profile`, {
+    headers: { 'Authorization': `Bearer ${token}` }
+  });
+  if (!res.ok) {
+    throw new Error('No se pudo obtener el perfil');
+  }
+  return res.json();
+}
+
 document.getElementById('login-form').addEventListener('submit', async (e) => {
   e.preventDefault();
   const email = document.getElementById('email').value;
@@ -18,6 +28,14 @@ document.getElementById('login-form').addEventListener('submit', async (e) => {
   try {
     const data = await login(email, password);
     localStorage.setItem('petiaToken', data.token);
+    const profile = await fetchProfile(data.token);
+    document.getElementById('profile-name').textContent = profile.name || '';
+    document.getElementById('profile-email').textContent = profile.email || '';
+    document.getElementById('login-view').classList.add('hidden');
+    document.getElementById('app-view').classList.remove('hidden');
+    const frame = document.getElementById('chat-frame');
+    frame.src = `${CONFIG.n8nChatUrl}?token=${encodeURIComponent(data.token)}`;
+    showChat();
     document.getElementById('login-view').classList.add('hidden');
     const frame = document.getElementById('chat-frame');
     frame.src = `${CONFIG.n8nChatUrl}?token=${encodeURIComponent(data.token)}`;
@@ -25,6 +43,25 @@ document.getElementById('login-form').addEventListener('submit', async (e) => {
   } catch (err) {
     document.getElementById('login-error').textContent = err.message;
   }
+});
+
+function showChat() {
+  document.getElementById('chat-view').classList.remove('hidden');
+  document.getElementById('profile-view').classList.add('hidden');
+}
+
+function showProfile() {
+  document.getElementById('profile-view').classList.remove('hidden');
+  document.getElementById('chat-view').classList.add('hidden');
+}
+
+document.getElementById('nav-chat').addEventListener('click', showChat);
+document.getElementById('nav-profile').addEventListener('click', showProfile);
+document.getElementById('logout').addEventListener('click', () => {
+  localStorage.removeItem('petiaToken');
+  document.getElementById('app-view').classList.add('hidden');
+  document.getElementById('login-view').classList.remove('hidden');
+  document.getElementById('login-form').reset();
 });
 
 // Simple voice to text using Web Speech API
