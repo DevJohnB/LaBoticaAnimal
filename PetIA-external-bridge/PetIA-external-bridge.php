@@ -26,7 +26,7 @@ class PetIA_External_Bridge {
         global $wpdb;
         $table_name      = $wpdb->prefix . 'petia_external_bridge_access';
         $charset_collate = $wpdb->get_charset_collate();
-        $sql             = "CREATE TABLE $table_name ( user_id BIGINT(20) UNSIGNED NOT NULL PRIMARY KEY, allowed TINYINT(1) NOT NULL DEFAULT 1 ) $charset_collate;";
+        $sql             = "CREATE TABLE $table_name ( user_id BIGINT(20) UNSIGNED NOT NULL PRIMARY KEY, allowed TINYINT(1) NOT NULL DEFAULT 1, start_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, end_date DATETIME NOT NULL DEFAULT '9999-12-31 23:59:59' ) $charset_collate;";
         require_once ABSPATH . 'wp-admin/includes/upgrade.php';
         dbDelta( $sql );
     }
@@ -157,6 +157,22 @@ class PetIA_External_Bridge {
         $user = wp_authenticate( $username, $password );
         if ( is_wp_error( $user ) ) {
             return $user;
+        }
+
+        global $wpdb;
+        $table   = $wpdb->prefix . 'petia_external_bridge_access';
+        $exists  = $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM $table WHERE user_id = %d", $user->ID ) );
+        if ( ! $exists ) {
+            $wpdb->insert(
+                $table,
+                [
+                    'user_id'    => $user->ID,
+                    'allowed'    => 1,
+                    'start_date' => current_time( 'mysql' ),
+                    'end_date'   => '9999-12-31 23:59:59',
+                ],
+                [ '%d', '%d', '%s', '%s' ]
+            );
         }
 
         if ( ! $this->user_has_access( $user->ID ) ) {
@@ -553,12 +569,15 @@ class PetIA_External_Bridge {
 
     protected function user_has_access( $user_id ) {
         global $wpdb;
-        $table   = $wpdb->prefix . 'petia_external_bridge_access';
-        $allowed = $wpdb->get_var( $wpdb->prepare( "SELECT allowed FROM $table WHERE user_id = %d", $user_id ) );
-        if ( null === $allowed ) {
+        $table = $wpdb->prefix . 'petia_external_bridge_access';
+        $row   = $wpdb->get_row( $wpdb->prepare( "SELECT allowed, end_date FROM $table WHERE user_id = %d", $user_id ) );
+        if ( null === $row ) {
             return true;
         }
-        return (bool) $allowed;
+        if ( ! $row->allowed ) {
+            return false;
+        }
+        return strtotime( $row->end_date ) > current_time( 'timestamp' );
     }
 
     public function register_admin_page() {
@@ -577,8 +596,19 @@ class PetIA_External_Bridge {
             global $wpdb;
             $table = $wpdb->prefix . 'petia_external_bridge_access';
             foreach ( $users as $user ) {
-                $allowed = isset( $_POST['access'][ $user->ID ] ) ? 1 : 0;
-                $wpdb->replace( $table, [ 'user_id' => $user->ID, 'allowed' => $allowed ], [ '%d', '%d' ] );
+                $allowed    = isset( $_POST['access'][ $user->ID ] ) ? 1 : 0;
+                $start_date = isset( $_POST['start_date'][ $user->ID ] ) && $_POST['start_date'][ $user->ID ] !== '' ? sanitize_text_field( $_POST['start_date'][ $user->ID ] ) . ' 00:00:00' : current_time( 'mysql' );
+                $end_date   = isset( $_POST['end_date'][ $user->ID ] ) && $_POST['end_date'][ $user->ID ] !== '' ? sanitize_text_field( $_POST['end_date'][ $user->ID ] ) . ' 23:59:59' : '9999-12-31 23:59:59';
+                $wpdb->replace(
+                    $table,
+                    [
+                        'user_id'    => $user->ID,
+                        'allowed'    => $allowed,
+                        'start_date' => $start_date,
+                        'end_date'   => $end_date,
+                    ],
+                    [ '%d', '%d', '%s', '%s' ]
+                );
             }
             echo '<div class="updated"><p>' . esc_html__( 'Settings saved.', 'petia-external-bridge' ) . '</p></div>';
         }
@@ -590,11 +620,14 @@ class PetIA_External_Bridge {
         echo '<div class="wrap"><h1>' . esc_html__( 'PetIA External Bridge Access', 'petia-external-bridge' ) . '</h1>';
         echo '<form method="post">';
         wp_nonce_field( 'petia_save_access', 'petia_access_nonce' );
-        echo '<table class="widefat"><thead><tr><th>' . esc_html__( 'User', 'petia-external-bridge' ) . '</th><th>' . esc_html__( 'Allowed', 'petia-external-bridge' ) . '</th></tr></thead><tbody>';
+        echo '<table class="widefat"><thead><tr><th>' . esc_html__( 'User', 'petia-external-bridge' ) . '</th><th>' . esc_html__( 'Allowed', 'petia-external-bridge' ) . '</th><th>' . esc_html__( 'Start Date', 'petia-external-bridge' ) . '</th><th>' . esc_html__( 'End Date', 'petia-external-bridge' ) . '</th></tr></thead><tbody>';
         foreach ( $users as $user ) {
-            $allowed = $wpdb->get_var( $wpdb->prepare( "SELECT allowed FROM $table WHERE user_id = %d", $user->ID ) );
+            $row     = $wpdb->get_row( $wpdb->prepare( "SELECT allowed, start_date, end_date FROM $table WHERE user_id = %d", $user->ID ) );
+            $allowed = $row ? $row->allowed : null;
             $checked = ( null === $allowed || $allowed ) ? 'checked' : '';
-            echo '<tr><td>' . esc_html( $user->user_login ) . '</td><td><input type="checkbox" name="access[' . intval( $user->ID ) . ']" value="1" ' . $checked . '></td></tr>';
+            $start_v = $row ? substr( $row->start_date, 0, 10 ) : '';
+            $end_v   = $row ? substr( $row->end_date, 0, 10 ) : '9999-12-31';
+            echo '<tr><td>' . esc_html( $user->user_login ) . '</td><td><input type="checkbox" name="access[' . intval( $user->ID ) . ']" value="1" ' . $checked . '></td><td><input type="date" name="start_date[' . intval( $user->ID ) . ']" value="' . esc_attr( $start_v ) . '"></td><td><input type="date" name="end_date[' . intval( $user->ID ) . ']" value="' . esc_attr( $end_v ) . '"></td></tr>';
         }
         echo '</tbody></table><p><input type="submit" class="button-primary" value="' . esc_attr__( 'Save Changes', 'petia-external-bridge' ) . '"></p></form></div>';
     }

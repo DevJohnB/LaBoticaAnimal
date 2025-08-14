@@ -45,7 +45,13 @@ Todos los endpoints, con excepción de **login**, **register**, **password-reset
 
 ## Control de acceso
 
-Al activarse, el plugin crea la tabla `wp_petia_external_bridge_access` donde se puede habilitar o deshabilitar el uso de los endpoints para cada usuario desde el panel de administración.
+Al activarse, el plugin crea la tabla `wp_petia_external_bridge_access` con los campos:
+
+- `allowed` para habilitar o deshabilitar el acceso a los endpoints.
+- `start_date` con la fecha de inicio del acceso (por defecto la fecha en que se crea el registro).
+- `end_date` con la fecha de fin de acceso (por defecto `31/12/9999`).
+
+Al iniciar sesión, si el usuario no tiene registro en esta tabla se crea uno automáticamente con las fechas anteriores y se verifica que `end_date` sea mayor a la fecha actual. Si la fecha fin ya pasó, el acceso es rechazado. Desde el menú de administración **Usuarios → PetIA Bridge Access** es posible modificar estas fechas para cada usuario.
 
 ## Instalación
 
