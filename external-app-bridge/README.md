@@ -34,6 +34,13 @@ Este plugin de WordPress expone un conjunto de endpoints REST para que una aplic
   - Actualiza los campos opcionales del perfil del usuario autenticado.
   - Parámetros (opcionales): `first_name`, `last_name`, `nickname`, `description`, `user_url`, `display_name`.
 
+- `GET /wp-json/external-app-bridge/v1/order/<id>/addresses`
+  - Devuelve la información de facturación y envío del pedido del usuario autenticado.
+
+- `POST /wp-json/external-app-bridge/v1/order/<id>/addresses`
+  - Actualiza la información de facturación y envío del pedido.
+  - Parámetros (opcionales): `billing` (objeto), `shipping` (objeto).
+
 Todos los endpoints, con excepción de **login**, **register**, **password-reset-request** y **password-reset**, requieren enviar el token en el encabezado `Authorization`.
 
 ## Instalación

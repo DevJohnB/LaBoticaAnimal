@@ -69,6 +69,18 @@ class External_App_Bridge {
             'callback'            => [ $this, 'handle_update_profile' ],
             'permission_callback' => '__return_true',
         ] );
+
+        register_rest_route( 'external-app-bridge/v1', '/order/(?P<id>\d+)/addresses', [
+            'methods'             => 'GET',
+            'callback'            => [ $this, 'handle_get_order_addresses' ],
+            'permission_callback' => '__return_true',
+        ] );
+
+        register_rest_route( 'external-app-bridge/v1', '/order/(?P<id>\d+)/addresses', [
+            'methods'             => 'POST',
+            'callback'            => [ $this, 'handle_update_order_addresses' ],
+            'permission_callback' => '__return_true',
+        ] );
     }
 
     /**
@@ -315,6 +327,72 @@ class External_App_Bridge {
         if ( ! $updated ) {
             return new WP_Error( 'no_fields', __( 'No profile fields provided.', 'external-app-bridge' ), [ 'status' => 400 ] );
         }
+
+        return [ 'success' => true ];
+    }
+
+    /**
+     * Retrieve billing and shipping addresses for an order.
+     */
+    public function handle_get_order_addresses( WP_REST_Request $request ) {
+        if ( ! function_exists( 'wc_get_order' ) ) {
+            return new WP_Error( 'woocommerce_missing', __( 'WooCommerce not available.', 'external-app-bridge' ), [ 'status' => 500 ] );
+        }
+
+        $order_id = absint( $request['id'] );
+        $order    = wc_get_order( $order_id );
+        if ( ! $order ) {
+            return new WP_Error( 'invalid_order', __( 'Order not found.', 'external-app-bridge' ), [ 'status' => 404 ] );
+        }
+
+        $user_id = get_current_user_id();
+        if ( $order->get_user_id() !== $user_id ) {
+            return new WP_Error( 'forbidden', __( 'You are not allowed to access this order.', 'external-app-bridge' ), [ 'status' => 403 ] );
+        }
+
+        return [
+            'billing'  => $order->get_address( 'billing' ),
+            'shipping' => $order->get_address( 'shipping' ),
+        ];
+    }
+
+    /**
+     * Update billing and shipping addresses for an order.
+     */
+    public function handle_update_order_addresses( WP_REST_Request $request ) {
+        if ( ! function_exists( 'wc_get_order' ) ) {
+            return new WP_Error( 'woocommerce_missing', __( 'WooCommerce not available.', 'external-app-bridge' ), [ 'status' => 500 ] );
+        }
+
+        $order_id = absint( $request['id'] );
+        $order    = wc_get_order( $order_id );
+        if ( ! $order ) {
+            return new WP_Error( 'invalid_order', __( 'Order not found.', 'external-app-bridge' ), [ 'status' => 404 ] );
+        }
+
+        $user_id = get_current_user_id();
+        if ( $order->get_user_id() !== $user_id ) {
+            return new WP_Error( 'forbidden', __( 'You are not allowed to update this order.', 'external-app-bridge' ), [ 'status' => 403 ] );
+        }
+
+        $billing  = $request->get_param( 'billing' );
+        $shipping = $request->get_param( 'shipping' );
+
+        if ( empty( $billing ) && empty( $shipping ) ) {
+            return new WP_Error( 'no_fields', __( 'No address fields provided.', 'external-app-bridge' ), [ 'status' => 400 ] );
+        }
+
+        if ( ! empty( $billing ) && is_array( $billing ) ) {
+            $clean_billing = function_exists( 'wc_clean' ) ? array_map( 'wc_clean', $billing ) : array_map( 'sanitize_text_field', $billing );
+            $order->set_address( $clean_billing, 'billing' );
+        }
+
+        if ( ! empty( $shipping ) && is_array( $shipping ) ) {
+            $clean_shipping = function_exists( 'wc_clean' ) ? array_map( 'wc_clean', $shipping ) : array_map( 'sanitize_text_field', $shipping );
+            $order->set_address( $clean_shipping, 'shipping' );
+        }
+
+        $order->save();
 
         return [ 'success' => true ];
     }
