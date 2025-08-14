@@ -36,6 +36,10 @@ document.getElementById('login-form').addEventListener('submit', async (e) => {
     const frame = document.getElementById('chat-frame');
     frame.src = `${CONFIG.n8nChatUrl}?token=${encodeURIComponent(data.token)}`;
     showChat();
+    document.getElementById('login-view').classList.add('hidden');
+    const frame = document.getElementById('chat-frame');
+    frame.src = `${CONFIG.n8nChatUrl}?token=${encodeURIComponent(data.token)}`;
+    document.getElementById('chat-view').classList.remove('hidden');
   } catch (err) {
     document.getElementById('login-error').textContent = err.message;
   }
