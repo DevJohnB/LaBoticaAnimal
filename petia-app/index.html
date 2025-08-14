@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PetIA</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="login-view">
+    <h1>PetIA</h1>
+    <form id="login-form">
+      <label>Email
+        <input type="email" id="email" required>
+      </label>
+      <label>Contraseña
+        <input type="password" id="password" required>
+      </label>
+      <button type="submit">Ingresar</button>
+    </form>
+    <p id="login-error" class="error"></p>
+  </div>
+  <div id="app-view" class="hidden">
+    <nav>
+      <button id="nav-chat">Chat</button>
+      <button id="nav-profile">Perfil</button>
+      <button id="logout">Salir</button>
+    </nav>
+    <section id="chat-view">
+      <iframe id="chat-frame" title="Chat"></iframe>
+      <div class="voice-controls">
+        <button id="start-voice">Hablar</button>
+        <textarea id="voice-output" readonly></textarea>
+      </div>
+    </section>
+    <section id="profile-view" class="hidden">
+      <h2>Mi perfil</h2>
+      <p><strong>Nombre:</strong> <span id="profile-name"></span></p>
+      <p><strong>Email:</strong> <span id="profile-email"></span></p>
+    </section>
+  </div>
+  <script src="config.js"></script>
+  <script src="main.js"></script>
+</body>
+</html>
