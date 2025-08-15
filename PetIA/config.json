@@ -1,5 +1,5 @@
 {
-  "apiBaseUrl": "https://example.com",
+  "apiBaseUrl": "https://laboticaanimal.com",
   "endpoints": {
     "login": "/wp-json/petia-app-bridge/v1/login",
     "logout": "/wp-json/petia-app-bridge/v1/logout",

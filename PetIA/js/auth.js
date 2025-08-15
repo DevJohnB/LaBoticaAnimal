@@ -5,15 +5,21 @@ async function loadConfig() {
   return window.appConfig;
 }
 
-async function login(username, password) {
+async function login(identifier, password) {
   const config = await loadConfig();
   const url = config.apiBaseUrl + config.endpoints.login;
+  const payload = identifier.includes('@')
+    ? { email: identifier, password }
+    : { username: identifier, password };
   const res = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username, password })
+    body: JSON.stringify(payload)
   });
-  if (!res.ok) throw new Error('Login failed');
+  if (!res.ok) {
+    const message = await res.text();
+    throw new Error(message || 'Login failed');
+  }
   const data = await res.json();
   localStorage.setItem('token', data.token);
 }
@@ -38,10 +44,11 @@ const loginForm = document.getElementById('loginForm');
 if (loginForm) {
   loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const username = document.getElementById('username').value;
+
+    const identifier = document.getElementById('username').value;
     const password = document.getElementById('password').value;
     try {
-      await login(username, password);
+      await login(identifier, password);
       window.location.href = 'user.html';
     } catch (err) {
       alert('Login error');
