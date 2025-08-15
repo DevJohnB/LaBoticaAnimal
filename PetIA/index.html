@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PetIA - Login</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script defer src="js/i18n.js"></script>
+  <script defer src="js/auth.js"></script>
+</head>
+<body class="bg-light">
+  <main class="container">
+    <h1 data-i18n="login_title">Iniciar sesión</h1>
+    <form id="loginForm">
+      <label for="username" data-i18n="username">Usuario</label>
+      <input type="text" id="username" required>
+      <label for="password" data-i18n="password">Contraseña</label>
+      <input type="password" id="password" required>
+      <button type="submit" class="btn-primary" data-i18n="login">Entrar</button>
+    </form>
+    <p><a href="recover.html" data-i18n="forgot_password">¿Olvidaste tu contraseña?</a></p>
+  </main>
+</body>
+</html>
