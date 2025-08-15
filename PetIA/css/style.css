@@ -1,0 +1,62 @@
+:root {
+  --color-primary: #0A3A48;
+  --color-secondary: #5AC0AE;
+  --color-accent: #B7E6DD;
+  --color-text: #1B1B1B;
+  --color-bg: #F4F4F4;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  color: var(--color-text);
+  background: var(--color-bg);
+  margin: 0;
+}
+
+.container {
+  max-width: 600px;
+  margin: 2rem auto;
+  padding: 1rem;
+}
+
+.menu {
+  display: flex;
+  gap: 1rem;
+  background: var(--color-primary);
+  padding: 0.5rem 1rem;
+}
+
+.menu a, .menu button {
+  color: white;
+  text-decoration: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.btn-primary {
+  background: var(--color-secondary);
+  color: #fff;
+  border: none;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+}
+
+.btn-secondary {
+  background: var(--color-primary);
+  color: #fff;
+  border: none;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+}
+
+.bg-light {
+  background: var(--color-bg);
+}
+
+.chat-frame {
+  width: 100%;
+  height: 500px;
+  border: 1px solid var(--color-accent);
+}
