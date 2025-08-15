@@ -44,6 +44,7 @@ const loginForm = document.getElementById('loginForm');
 if (loginForm) {
   loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
+
     const identifier = document.getElementById('username').value;
     const password = document.getElementById('password').value;
     try {
