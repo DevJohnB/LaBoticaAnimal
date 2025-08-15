@@ -1,0 +1,14 @@
+{
+  "apiBaseUrl": "https://example.com",
+  "endpoints": {
+    "login": "/wp-json/petia-app-bridge/v1/login",
+    "logout": "/wp-json/petia-app-bridge/v1/logout",
+    "validateToken": "/wp-json/petia-app-bridge/v1/validate-token",
+    "passwordResetRequest": "/wp-json/petia-app-bridge/v1/password-reset-request",
+    "passwordReset": "/wp-json/petia-app-bridge/v1/password-reset",
+    "profile": {
+      "get": "/wp-json/petia-app-bridge/v1/profile",
+      "update": "/wp-json/petia-app-bridge/v1/profile"
+    }
+  }
+}

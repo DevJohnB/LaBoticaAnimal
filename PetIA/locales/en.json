@@ -1,0 +1,18 @@
+{
+  "login_title": "Login",
+  "username": "Username",
+  "password": "Password",
+  "login": "Login",
+  "forgot_password": "Forgot your password?",
+  "recover_title": "Password recovery",
+  "email": "Email",
+  "send": "Send",
+  "back_login": "Back to login",
+  "menu_profile": "Profile",
+  "menu_chat": "Chat",
+  "menu_policy": "Policies",
+  "logout": "Logout",
+  "user_info": "User information",
+  "chat_title": "Chat",
+  "policy_title": "Privacy policy"
+}
