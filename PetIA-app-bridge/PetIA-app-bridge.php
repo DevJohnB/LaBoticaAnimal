@@ -94,6 +94,23 @@ class PetIA_App_Bridge {
             'callback'            => [ $this, 'handle_update_order_addresses' ],
             'permission_callback' => '__return_true',
         ] );
+        register_rest_route( 'petia-app-bridge/v1', '/product-categories', [
+            'methods'             => 'GET',
+            'callback'            => [ $this, 'handle_get_product_categories' ],
+            'permission_callback' => '__return_true',
+        ] );
+
+        register_rest_route( 'petia-app-bridge/v1', '/products', [
+            'methods'             => 'GET',
+            'callback'            => [ $this, 'handle_get_products' ],
+            'permission_callback' => '__return_true',
+        ] );
+
+        register_rest_route( 'petia-app-bridge/v1', '/brands', [
+            'methods'             => 'GET',
+            'callback'            => [ $this, 'handle_get_brands' ],
+            'permission_callback' => '__return_true',
+        ] );
     }
 
     /**
@@ -432,6 +449,125 @@ class PetIA_App_Bridge {
         $order->save();
 
         return [ 'success' => true ];
+    }
+
+    /**
+     * Retrieve product categories.
+     */
+    public function handle_get_product_categories( WP_REST_Request $request ) {
+        if ( ! get_current_user_id() ) {
+            return new WP_Error( 'rest_forbidden', __( 'Authentication required.', 'petia-app-bridge' ), [ 'status' => 401 ] );
+        }
+
+        if ( ! taxonomy_exists( 'product_cat' ) ) {
+            return new WP_Error( 'woocommerce_missing', __( 'Product categories not available.', 'petia-app-bridge' ), [ 'status' => 500 ] );
+        }
+
+        $terms = get_terms( [
+            'taxonomy'   => 'product_cat',
+            'hide_empty' => false,
+        ] );
+
+        if ( is_wp_error( $terms ) ) {
+            return $terms;
+        }
+
+        $categories = [];
+        foreach ( $terms as $term ) {
+            $thumb_id  = get_term_meta( $term->term_id, 'thumbnail_id', true );
+            $image_url = $thumb_id ? wp_get_attachment_url( $thumb_id ) : '';
+            $categories[] = [
+                'id'          => $term->term_id,
+                'name'        => $term->name,
+                'description' => $term->description,
+                'slug'        => $term->slug,
+                'image'       => $image_url,
+            ];
+        }
+
+        return $categories;
+    }
+
+    /**
+     * Retrieve products.
+     */
+    public function handle_get_products( WP_REST_Request $request ) {
+        if ( ! function_exists( 'wc_get_products' ) ) {
+            return new WP_Error( 'woocommerce_missing', __( 'WooCommerce not available.', 'petia-app-bridge' ), [ 'status' => 500 ] );
+        }
+
+        if ( ! get_current_user_id() ) {
+            return new WP_Error( 'rest_forbidden', __( 'Authentication required.', 'petia-app-bridge' ), [ 'status' => 401 ] );
+        }
+
+        $per_page = absint( $request->get_param( 'per_page' ) );
+        $page     = absint( $request->get_param( 'page' ) );
+        $category = sanitize_title( $request->get_param( 'category' ) );
+
+        $args = [
+            'limit' => $per_page > 0 ? $per_page : -1,
+            'page'  => $page > 0 ? $page : 1,
+        ];
+
+        if ( ! empty( $category ) ) {
+            $args['category'] = $category;
+        }
+
+        $products = wc_get_products( $args );
+        $data     = [];
+
+        foreach ( $products as $product ) {
+            $image_id  = $product->get_image_id();
+            $image_url = $image_id ? wp_get_attachment_url( $image_id ) : '';
+            $data[]    = [
+                'id'          => $product->get_id(),
+                'name'        => $product->get_name(),
+                'description' => $product->get_description(),
+                'slug'        => $product->get_slug(),
+                'price'       => $product->get_price(),
+                'image'       => $image_url,
+            ];
+        }
+
+        return $data;
+    }
+
+    /**
+     * Retrieve product brands.
+     */
+    public function handle_get_brands( WP_REST_Request $request ) {
+        if ( ! get_current_user_id() ) {
+            return new WP_Error( 'rest_forbidden', __( 'Authentication required.', 'petia-app-bridge' ), [ 'status' => 401 ] );
+        }
+
+        $taxonomy = taxonomy_exists( 'product_brand' ) ? 'product_brand' : 'product_tag';
+        if ( ! taxonomy_exists( $taxonomy ) ) {
+            return new WP_Error( 'woocommerce_missing', __( 'Product brands not available.', 'petia-app-bridge' ), [ 'status' => 500 ] );
+        }
+
+        $terms = get_terms( [
+            'taxonomy'   => $taxonomy,
+            'hide_empty' => false,
+        ] );
+
+        if ( is_wp_error( $terms ) ) {
+            return $terms;
+        }
+
+        $brands = [];
+        foreach ( $terms as $term ) {
+            $thumb_id  = get_term_meta( $term->term_id, 'thumbnail_id', true );
+            $image_url = $thumb_id ? wp_get_attachment_url( $thumb_id ) : '';
+            $brands[]  = [
+                'id'          => $term->term_id,
+                'name'        => $term->name,
+                'description' => $term->description,
+                'slug'        => $term->slug,
+                'image'       => $image_url,
+            ];
+        }
+
+        return $brands;
     }
 
     /**
