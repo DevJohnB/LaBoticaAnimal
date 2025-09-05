@@ -1,9 +1,5 @@
-async function loadConfig() {
-  if (!window.appConfig) {
-    window.appConfig = await fetch('config.json').then(r => r.json());
-  }
-  return window.appConfig;
-}
+import config from '../config.js';
+import { logout } from './auth.js';
 
 async function getProfile() {
   const token = localStorage.getItem('token');
@@ -11,7 +7,6 @@ async function getProfile() {
     window.location.href = 'index.html';
     return;
   }
-  const config = await loadConfig();
   const url = config.apiBaseUrl + config.endpoints.profile.get;
   const res = await fetch(url, {
     headers: { 'Authorization': `Bearer ${token}` }
