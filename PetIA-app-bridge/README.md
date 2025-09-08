@@ -46,7 +46,10 @@ Este plugin de WordPress expone un conjunto de endpoints REST para que una aplic
 
 - `GET /wp-json/petia-app-bridge/v1/products`
   - Devuelve un listado de productos con nombre, descripción, slug, precio e imagen.
-  - Parámetros (opcionales): `per_page` (número de resultados por página), `page` (página), `category` (slug de la categoría).
+  - Parámetros (opcionales): `per_page` (número de resultados por página), `page` (página).
+
+- `GET /wp-json/petia-app-bridge/v1/brands`
+  - Devuelve la lista de marcas de productos con nombre, descripción, slug e imagen.
 
 - `GET /wp-json/petia-app-bridge/v1/brands`
   - Devuelve la lista de marcas de productos con nombre, descripción, slug e imagen.

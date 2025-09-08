@@ -5,19 +5,21 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>PetIA - Chat</title>
   <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/responsive.css">
   <script defer src="js/i18n.js"></script>
   <script type="module" src="js/app.js"></script>
 </head>
 <body class="bg-light">
-  <nav class="menu">
+  <nav class="navbar">
     <a href="user.html" data-i18n="menu_profile">Perfil</a>
     <a href="chat.html" data-i18n="menu_chat">Chat</a>
+    <a href="store.html" data-i18n="menu_store">Tienda</a>
     <a href="policy.html" data-i18n="menu_policy">Políticas</a>
     <button id="logoutBtn" class="btn-secondary" data-i18n="logout">Salir</button>
   </nav>
-  <main class="container">
+  <main class="content">
     <h1 data-i18n="chat_title">Chat</h1>
-    <iframe src="http://localhost:5678/webhook/e388905d-d5df-4b0e-9355-af241508fad2/chat" class="chat-frame"></iframe>
+    <iframe src="https://n8n.laboticaanimal.com/webhook/66a64fec-efcd-493a-bfe0-06ceea8de285/chat" class="chat-frame"></iframe>
   </main>
 </body>
 </html>

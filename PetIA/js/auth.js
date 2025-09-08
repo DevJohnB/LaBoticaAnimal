@@ -16,6 +16,10 @@ async function login(identifier, password) {
   }
   const data = await res.json();
   localStorage.setItem('token', data.token);
+  if (data.consumer_key && data.consumer_secret) {
+    localStorage.setItem('consumerKey', data.consumer_key);
+    localStorage.setItem('consumerSecret', data.consumer_secret);
+  }
 }
 
 async function requestPasswordReset(email) {
@@ -29,6 +33,8 @@ async function requestPasswordReset(email) {
 
 export function logout() {
   localStorage.removeItem('token');
+  localStorage.removeItem('consumerKey');
+  localStorage.removeItem('consumerSecret');
   window.location.href = 'index.html';
 }
 

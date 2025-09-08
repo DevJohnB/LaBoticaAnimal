@@ -1,3 +1,4 @@
+// Application configuration
 export default {
   apiBaseUrl: "https://laboticaanimal.com",
   endpoints: {
@@ -6,9 +7,9 @@ export default {
     validateToken: "/wp-json/petia-app-bridge/v1/validate-token",
     passwordResetRequest: "/wp-json/petia-app-bridge/v1/password-reset-request",
     passwordReset: "/wp-json/petia-app-bridge/v1/password-reset",
-    profile: {
-      get: "/wp-json/petia-app-bridge/v1/profile",
-      update: "/wp-json/petia-app-bridge/v1/profile"
-    }
+    profile: "/wp-json/petia-app-bridge/v1/profile"
+  },
+  woocommerce: {
+    products: "/wp-json/wc/v3/products"
   }
 };
