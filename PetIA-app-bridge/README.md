@@ -41,6 +41,16 @@ Este plugin de WordPress expone un conjunto de endpoints REST para que una aplic
   - Actualiza la información de facturación y envío del pedido.
   - Parámetros (opcionales): `billing` (objeto), `shipping` (objeto).
 
+- `GET /wp-json/petia-app-bridge/v1/product-categories`
+  - Devuelve la lista de categorías de productos con nombre, descripción, slug e imagen.
+
+- `GET /wp-json/petia-app-bridge/v1/products`
+  - Devuelve un listado de productos con nombre, descripción, slug, precio e imagen.
+  - Parámetros (opcionales): `per_page` (número de resultados por página), `page` (página).
+
+- `GET /wp-json/petia-app-bridge/v1/brands`
+  - Devuelve la lista de marcas de productos con nombre, descripción, slug e imagen.
+
 Todos los endpoints, con excepción de **login**, **register**, **password-reset-request** y **password-reset**, requieren enviar el token en el encabezado `Authorization`.
 
 ## Control de acceso
