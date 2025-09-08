@@ -1,3 +1,4 @@
+// Application configuration
 export default {
   apiBaseUrl: "https://laboticaanimal.com",
   endpoints: {
