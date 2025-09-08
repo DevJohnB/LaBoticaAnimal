@@ -10,9 +10,11 @@
   "back_login": "Back to login",
   "menu_profile": "Profile",
   "menu_chat": "Chat",
+  "menu_store": "Store",
   "menu_policy": "Policies",
   "logout": "Logout",
   "user_info": "User information",
   "chat_title": "Chat",
+  "store_title": "Store",
   "policy_title": "Privacy policy"
 }
