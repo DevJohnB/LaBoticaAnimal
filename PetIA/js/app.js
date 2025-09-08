@@ -7,7 +7,7 @@ async function getProfile() {
     window.location.href = 'index.html';
     return;
   }
-  const url = config.apiBaseUrl + config.endpoints.profile.get;
+  const url = config.apiBaseUrl + config.endpoints.profile;
   const res = await fetch(url, {
     headers: { 'Authorization': `Bearer ${token}` }
   });
