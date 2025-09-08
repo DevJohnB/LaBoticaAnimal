@@ -12,8 +12,6 @@ export default {
     }
   },
   woocommerce: {
-    products: "/wp-json/wc/v3/products",
-    consumerKey: "YOUR_CONSUMER_KEY",
-    consumerSecret: "YOUR_CONSUMER_SECRET"
+    products: "/wp-json/wc/v3/products"
   }
 };

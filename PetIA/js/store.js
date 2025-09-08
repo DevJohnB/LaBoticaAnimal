@@ -4,7 +4,13 @@ import { logout } from './auth.js';
 document.getElementById('logoutBtn').addEventListener('click', logout);
 
 async function loadProducts() {
-  const { products, consumerKey, consumerSecret } = config.woocommerce;
+  const { products } = config.woocommerce;
+  const consumerKey = localStorage.getItem('consumerKey');
+  const consumerSecret = localStorage.getItem('consumerSecret');
+  if (!consumerKey || !consumerSecret) {
+    console.error('Missing WooCommerce credentials');
+    return;
+  }
   const url = `${config.apiBaseUrl}${products}?consumer_key=${consumerKey}&consumer_secret=${consumerSecret}`;
   try {
     const res = await fetch(url);
