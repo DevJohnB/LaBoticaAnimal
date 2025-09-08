@@ -10,5 +10,10 @@ export default {
       get: "/wp-json/petia-app-bridge/v1/profile",
       update: "/wp-json/petia-app-bridge/v1/profile"
     }
+  },
+  woocommerce: {
+    products: "/wp-json/wc/v3/products",
+    consumerKey: "YOUR_CONSUMER_KEY",
+    consumerSecret: "YOUR_CONSUMER_SECRET"
   }
 };
