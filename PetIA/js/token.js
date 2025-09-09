@@ -13,22 +13,16 @@ export function isTokenExpired(token) {
 }
 
 export function setToken(token) {
-  let cookie = `token=${token}; path=/; SameSite=Lax`;
-  if (location.protocol === 'https:') {
-    cookie += '; Secure';
-  }
-  document.cookie = cookie;
+  sessionStorage.setItem('token', token);
 }
 
 export function getToken() {
-  return document.cookie
-    .split(';')
-    .map(c => c.trim())
-    .find(c => c.startsWith('token='))
-    ?.split('=')[1] || '';
+  return sessionStorage.getItem('token') || '';
 }
 
 export function clearToken() {
+  sessionStorage.removeItem('token');
+  // Remove legacy cookie if present
   document.cookie = 'token=; Max-Age=0; path=/;';
 }
 
