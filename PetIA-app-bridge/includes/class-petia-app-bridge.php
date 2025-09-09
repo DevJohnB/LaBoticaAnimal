@@ -6,7 +6,6 @@ class PetIA_App_Bridge {
         $this->token_manager = new PetIA_Token_Manager();
         add_action( 'rest_api_init', [ $this, 'register_routes' ] );
         add_filter( 'rest_authentication_errors', [ $this, 'authenticate_requests' ] );
-        add_filter( 'rest_pre_serve_request', [ $this, 'cors_headers' ], 10, 3 );
 
         if ( is_admin() ) {
             new PetIA_Admin();
@@ -26,14 +25,6 @@ class PetIA_App_Bridge {
         ) $charset;";
         require_once ABSPATH . 'wp-admin/includes/upgrade.php';
         dbDelta( $sql );
-    }
-
-    public function cors_headers( $served, $result, $request ) {
-        header( 'Access-Control-Allow-Origin: ' . PETIA_ALLOWED_ORIGINS );
-        header( 'Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS' );
-        header( 'Access-Control-Allow-Credentials: true' );
-        header( 'Access-Control-Allow-Headers: Authorization, Content-Type' );
-        return $served;
     }
 
     public function authenticate_requests( $result ) {
