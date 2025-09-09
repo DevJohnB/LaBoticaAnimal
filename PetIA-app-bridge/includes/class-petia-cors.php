@@ -43,9 +43,13 @@ class PetIA_CORS {
         $allowed         = defined( 'PETIA_ALLOWED_ORIGINS' ) ? array_map( 'trim', explode( ',', PETIA_ALLOWED_ORIGINS ) ) : [ get_site_url() ];
         $this->allow_all = in_array( '*', $allowed, true );
         return $this->allow_all || in_array( $origin, $allowed, true );
+
     }
 
     protected function send_cors_headers( $origin ) {
+        if ( defined( 'PETIA_ALLOWED_ORIGINS' ) && '*' === PETIA_ALLOWED_ORIGINS ) {
+            $origin = '*';
+        }
         header( "Access-Control-Allow-Origin: {$origin}" );
         if ( $this->allow_all ) {
             header( 'Vary: Origin' );

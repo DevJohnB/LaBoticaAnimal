@@ -12,7 +12,7 @@ Repositorio que combina la aplicación web **PetIA** y el plugin de WordPress **
 - Una instalación de WordPress (con WooCommerce) para usar el plugin.
 
 ## Configuración rápida
-1. **Plugin**: copia `PetIA-app-bridge` en `wp-content/plugins/`, actívalo y define `AUTH_KEY` y `PETIA_ALLOWED_ORIGINS` en `wp-config.php`. Consulta el [README del plugin](PetIA-app-bridge/README.md).
+1. **Plugin**: copia `PetIA-app-bridge` en `wp-content/plugins/`, actívalo y define `AUTH_KEY`. Si deseas restringir dominios, configura `PETIA_ALLOWED_ORIGINS` en `wp-config.php`. Consulta el [README del plugin](PetIA-app-bridge/README.md).
 2. **Aplicación**: sirve el contenido de `PetIA/` en un servidor estático y ajusta `apiBaseUrl` en `PetIA/config.js`. Más detalles en el [README de la app](PetIA/README.md).
 
 ## Pruebas
