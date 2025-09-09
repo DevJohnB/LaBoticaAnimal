@@ -1,6 +1,8 @@
 // Application configuration
 const apiBaseUrl =
-  process.env.API_BASE_URL ||
+  (typeof process !== "undefined" &&
+    process.env &&
+    process.env.API_BASE_URL) ||
   globalThis.API_BASE_URL ||
   "https://laboticaanimal.com";
 
