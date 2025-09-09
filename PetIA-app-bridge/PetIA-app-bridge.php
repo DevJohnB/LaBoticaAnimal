@@ -11,10 +11,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-if ( ! defined( 'PETIA_ALLOWED_ORIGINS' ) ) {
-    define( 'PETIA_ALLOWED_ORIGINS', '*' );
-}
-
 if ( file_exists( __DIR__ . '/vendor/autoload.php' ) ) {
     require __DIR__ . '/vendor/autoload.php';
 } else {

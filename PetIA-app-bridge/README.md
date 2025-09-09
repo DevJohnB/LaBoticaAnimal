@@ -8,20 +8,18 @@ Plugin de WordPress que expone endpoints REST para que aplicaciones externas use
 - Catálogo de categorías, productos y marcas.
 - Control de acceso por usuario con fechas de vigencia.
 - Menú de administración **PetIA Bridge** con pestañas de acceso y ejecución de pruebas.
-- Soporte CORS configurable mediante la constante `PETIA_ALLOWED_ORIGINS` (por defecto permite todos los dominios).
 
 ## Requisitos
 - WordPress 5.0 o superior.
 - WooCommerce.
-- Definir `AUTH_KEY` y, opcionalmente, `PETIA_ALLOWED_ORIGINS` en `wp-config.php` para restringir dominios.
+- Definir `AUTH_KEY` en `wp-config.php`.
 - Node.js si se desean correr pruebas desde el administrador.
 
 ## Instalación
 1. Copia `PetIA-app-bridge` a `wp-content/plugins/`.
 2. Activa el plugin en el panel de WordPress.
-3. (Opcional) Configura `PETIA_ALLOWED_ORIGINS` con una lista separada por comas de dominios permitidos (por defecto `*`).
-4. Gestiona las fechas de acceso desde **PetIA Bridge** en la pestaña *Access Control*.
-5. (Opcional) Ejecuta las pruebas desde la pestaña *Run Tests* del mismo menú.
+3. Gestiona las fechas de acceso desde **PetIA Bridge** en la pestaña *Access Control*.
+4. (Opcional) Ejecuta las pruebas desde la pestaña *Run Tests* del mismo menú.
 
 ## Endpoints
 ### Autenticación
