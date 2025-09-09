@@ -121,14 +121,25 @@ class PetIA_App_Bridge {
     public function add_cors_support() {
         remove_filter( 'rest_pre_serve_request', 'rest_send_cors_headers' );
         add_filter( 'rest_pre_serve_request', function( $value ) {
-            header( 'Access-Control-Allow-Origin: *' );
-            header( 'Access-Control-Allow-Methods: GET, POST, OPTIONS' );
-            header( 'Access-Control-Allow-Headers: Authorization, Content-Type' );
-            header( 'Access-Control-Allow-Credentials: true' );
+            $origin       = isset( $_SERVER['HTTP_ORIGIN'] ) ? trim( $_SERVER['HTTP_ORIGIN'] ) : '';
+            $origin_valid = $origin && 'null' !== $origin;
+
+            if ( $origin_valid ) {
+                header( "Access-Control-Allow-Origin: {$origin}" );
+                header( 'Access-Control-Allow-Methods: GET, POST, OPTIONS' );
+                header( 'Access-Control-Allow-Headers: Authorization, Content-Type' );
+                header( 'Access-Control-Allow-Credentials: true' );
+            }
+
             if ( 'OPTIONS' === $_SERVER['REQUEST_METHOD'] ) {
-                status_header( 200 );
+                status_header( $origin_valid ? 200 : 400 );
                 return true;
             }
+
+            if ( ! $origin_valid ) {
+                status_header( 400 );
+            }
+
             return $value;
         }, 10, 3 );
     }
@@ -138,10 +149,19 @@ class PetIA_App_Bridge {
      */
     public function maybe_handle_preflight() {
         if ( isset( $_SERVER['REQUEST_METHOD'] ) && 'OPTIONS' === $_SERVER['REQUEST_METHOD'] ) {
-            header( 'Access-Control-Allow-Origin: *' );
-            header( 'Access-Control-Allow-Methods: GET, POST, OPTIONS' );
-            header( 'Access-Control-Allow-Headers: Authorization, Content-Type' );
-            header( 'Access-Control-Allow-Credentials: true' );
+            $origin       = isset( $_SERVER['HTTP_ORIGIN'] ) ? trim( $_SERVER['HTTP_ORIGIN'] ) : '';
+            $origin_valid = $origin && 'null' !== $origin;
+
+            if ( $origin_valid ) {
+                header( "Access-Control-Allow-Origin: {$origin}" );
+                header( 'Access-Control-Allow-Methods: GET, POST, OPTIONS' );
+                header( 'Access-Control-Allow-Headers: Authorization, Content-Type' );
+                header( 'Access-Control-Allow-Credentials: true' );
+                status_header( 200 );
+            } else {
+                status_header( 400 );
+            }
+
             exit;
         }
     }
