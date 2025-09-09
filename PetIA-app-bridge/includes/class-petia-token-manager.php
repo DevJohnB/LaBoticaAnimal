@@ -11,7 +11,7 @@ class PetIA_Token_Manager {
 
     public function __construct() {
         if ( ! defined( 'AUTH_KEY' ) || empty( AUTH_KEY ) || 'change_this_secret_key' === AUTH_KEY ) {
-            wp_die( __( 'AUTH_KEY must be defined in wp-config.php.', 'petia-app-bridge' ) );
+            throw new \Exception( __( 'AUTH_KEY must be defined in wp-config.php.', 'petia-app-bridge' ) );
         }
         $this->secret = AUTH_KEY;
     }

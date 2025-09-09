@@ -2,6 +2,7 @@
 
 require_once __DIR__ . '/class-petia-token-manager.php';
 require_once __DIR__ . '/class-petia-admin.php';
+use Exception;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
@@ -12,7 +13,17 @@ class PetIA_App_Bridge {
     protected $token_manager;
 
     public function __construct() {
-        $this->token_manager = new PetIA_Token_Manager();
+        try {
+            $this->token_manager = new PetIA_Token_Manager();
+        } catch ( Exception $e ) {
+            if ( function_exists( 'deactivate_plugins' ) ) {
+                deactivate_plugins( plugin_basename( dirname( __DIR__ ) . '/PetIA-app-bridge.php' ) );
+            }
+            add_action( 'admin_notices', function() use ( $e ) {
+                echo '<div class="error"><p>' . esc_html( $e->getMessage() ) . '</p></div>';
+            } );
+            return;
+        }
 
         add_action( 'rest_api_init', [ $this, 'register_routes' ] );
         add_filter( 'rest_authentication_errors', [ $this, 'authenticate_request' ] );
