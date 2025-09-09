@@ -11,7 +11,7 @@ Este plugin de WordPress expone un conjunto de endpoints REST para que una aplic
 
 - `POST /wp-json/petia-app-bridge/v1/login`
   - Autentica al usuario y devuelve un token.
-  - Parámetros: `email` o `username`, `password`.
+  - Parámetros: `email`, `password`.
 
 - `POST /wp-json/petia-app-bridge/v1/logout`
   - Revoca el token actual enviado en el encabezado `Authorization: Bearer <token>`.

@@ -1,10 +1,8 @@
 import config from '../config.js';
 
-async function login(identifier, password) {
+async function login(email, password) {
   const url = config.apiBaseUrl + config.endpoints.login;
-  const payload = identifier.includes('@')
-    ? { email: identifier, password }
-    : { username: identifier, password };
+  const payload = { email, password };
   const res = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -72,10 +70,10 @@ if (loginForm) {
   loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
 
-    const identifier = document.getElementById('username').value;
+    const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
     try {
-      await login(identifier, password);
+      await login(email, password);
       window.location.href = 'user.html';
     } catch (err) {
       alert('Login error');

@@ -230,23 +230,19 @@ class PetIA_App_Bridge {
      * Handle user login and token generation.
      */
     public function handle_login( WP_REST_Request $request ) {
-        $username = sanitize_user( $request->get_param( 'username' ) );
         $email    = sanitize_email( $request->get_param( 'email' ) );
         $password = $request->get_param( 'password' );
 
-        if ( empty( $password ) || ( empty( $username ) && empty( $email ) ) ) {
-            return new WP_Error( 'missing_fields', __( 'Email or username and password are required.', 'petia-app-bridge' ), [ 'status' => 400 ] );
+        if ( empty( $email ) || empty( $password ) ) {
+            return new WP_Error( 'missing_fields', __( 'Email and password are required.', 'petia-app-bridge' ), [ 'status' => 400 ] );
         }
 
-        if ( ! empty( $email ) ) {
-            $user_obj = get_user_by( 'email', $email );
-            if ( ! $user_obj ) {
-                return new WP_Error( 'invalid_credentials', __( 'Invalid email or password.', 'petia-app-bridge' ), [ 'status' => 401 ] );
-            }
-            $username = $user_obj->user_login;
+        $user_obj = get_user_by( 'email', $email );
+        if ( ! $user_obj ) {
+            return new WP_Error( 'invalid_credentials', __( 'Invalid email or password.', 'petia-app-bridge' ), [ 'status' => 401 ] );
         }
 
-        $user = wp_authenticate( $username, $password );
+        $user = wp_authenticate( $user_obj->user_login, $password );
         if ( is_wp_error( $user ) ) {
             return $user;
         }
