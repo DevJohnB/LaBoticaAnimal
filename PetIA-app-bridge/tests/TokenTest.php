@@ -20,6 +20,10 @@ if ( ! function_exists('wp_die') ) { function wp_die($msg){ throw new Exception(
 if ( ! function_exists('get_transient') ) { function get_transient(){ return false; } }
 if ( ! function_exists('set_transient') ) { function set_transient(){ return true; } }
 
+if ( ! defined('ABSPATH') ) {
+    define('ABSPATH', __DIR__ . '/');
+}
+
 require_once __DIR__ . '/../vendor/autoload.php';
 require_once __DIR__ . '/../includes/class-petia-token-manager.php';
 

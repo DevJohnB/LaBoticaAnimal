@@ -38,11 +38,17 @@ class PetIA_CORS {
     }
 
     public function is_origin_allowed( $origin ) {
-        $allowed = defined( 'PETIA_ALLOWED_ORIGINS' ) ? array_map( 'trim', explode( ',', PETIA_ALLOWED_ORIGINS ) ) : [ get_site_url() ];
+        if ( ! defined( 'PETIA_ALLOWED_ORIGINS' ) || '*' === PETIA_ALLOWED_ORIGINS ) {
+            return true;
+        }
+        $allowed = array_map( 'trim', explode( ',', PETIA_ALLOWED_ORIGINS ) );
         return in_array( $origin, $allowed, true );
     }
 
     protected function send_cors_headers( $origin ) {
+        if ( defined( 'PETIA_ALLOWED_ORIGINS' ) && '*' === PETIA_ALLOWED_ORIGINS ) {
+            $origin = '*';
+        }
         header( "Access-Control-Allow-Origin: {$origin}" );
         header( 'Access-Control-Allow-Methods: GET, POST, OPTIONS' );
         header( 'Access-Control-Allow-Headers: Authorization, Content-Type' );
