@@ -1,9 +1,11 @@
 <?php
+namespace PetIA;
+
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-class PetIA_Admin {
+class Admin {
     public function __construct() {
         add_action( 'admin_menu', [ $this, 'register_admin_page' ] );
     }
