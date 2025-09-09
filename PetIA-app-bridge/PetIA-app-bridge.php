@@ -127,17 +127,10 @@ class PetIA_App_Bridge {
     public function add_cors_support() {
         remove_filter( 'rest_pre_serve_request', 'rest_send_cors_headers' );
         add_filter( 'rest_pre_serve_request', function( $value ) {
-            $origin = '';
-            if ( ! empty( $_SERVER['HTTP_ORIGIN'] ) ) {
-                $origin = trim( $_SERVER['HTTP_ORIGIN'] );
-            } elseif ( ! empty( $_SERVER['HTTP_X_FORWARDED_ORIGIN'] ) ) {
-                $origin = trim( $_SERVER['HTTP_X_FORWARDED_ORIGIN'] );
-            }
+            $origin = $this->get_request_origin();
+            $allowed = $this->is_origin_allowed( $origin );
 
-            $origin_provided = '' !== $origin;
-            $origin_valid    = ! $origin_provided || 'null' !== $origin;
-
-            if ( $origin_provided && $origin_valid ) {
+            if ( $origin && $allowed ) {
                 header( "Access-Control-Allow-Origin: {$origin}" );
                 header( 'Access-Control-Allow-Methods: GET, POST, OPTIONS' );
                 header( 'Access-Control-Allow-Headers: Authorization, Content-Type' );
@@ -145,14 +138,13 @@ class PetIA_App_Bridge {
             }
 
             if ( 'OPTIONS' === $_SERVER['REQUEST_METHOD'] ) {
-                status_header( 200 );
+                status_header( $allowed ? 200 : 403 );
                 return true;
             }
 
-            if ( $origin_provided && ! $origin_valid ) {
-                status_header( 400 );
+            if ( $origin && ! $allowed ) {
+                status_header( 403 );
             }
-
 
             return $value;
         }, 10, 3 );
@@ -163,35 +155,44 @@ class PetIA_App_Bridge {
      */
     public function maybe_handle_preflight() {
         if ( isset( $_SERVER['REQUEST_METHOD'] ) && 'OPTIONS' === $_SERVER['REQUEST_METHOD'] ) {
-            error_log( 'maybe_handle_preflight triggered' );
-            error_log( 'HTTP_ORIGIN: ' . ( $_SERVER['HTTP_ORIGIN'] ?? 'not set' ) );
-            error_log( 'HTTP_X_FORWARDED_ORIGIN: ' . ( $_SERVER['HTTP_X_FORWARDED_ORIGIN'] ?? 'not set' ) );
+            $origin  = $this->get_request_origin();
+            $allowed = $this->is_origin_allowed( $origin );
 
-            $origin = '';
-            if ( ! empty( $_SERVER['HTTP_ORIGIN'] ) ) {
-                $origin = trim( $_SERVER['HTTP_ORIGIN'] );
-            } elseif ( ! empty( $_SERVER['HTTP_X_FORWARDED_ORIGIN'] ) ) {
-                $origin = trim( $_SERVER['HTTP_X_FORWARDED_ORIGIN'] );
-            }
-
-            $origin_provided = '' !== $origin;
-            $origin_valid    = ! $origin_provided || 'null' !== $origin;
-
-            if ( $origin_provided && $origin_valid ) {
+            if ( $origin && $allowed ) {
                 header( "Access-Control-Allow-Origin: {$origin}" );
                 header( 'Access-Control-Allow-Methods: GET, POST, OPTIONS' );
                 header( 'Access-Control-Allow-Headers: Authorization, Content-Type' );
                 header( 'Access-Control-Allow-Credentials: true' );
                 status_header( 200 );
-            } elseif ( $origin_provided && ! $origin_valid ) {
-                status_header( 400 );
             } else {
-                status_header( 200 );
+                status_header( 403 );
             }
 
-            status_header( 200 );
             exit;
         }
+    }
+
+    protected function get_request_origin() {
+        $origin = '';
+        if ( ! empty( $_SERVER['HTTP_ORIGIN'] ) ) {
+            $origin = trim( $_SERVER['HTTP_ORIGIN'] );
+        } elseif ( ! empty( $_SERVER['HTTP_X_FORWARDED_ORIGIN'] ) ) {
+            $origin = trim( $_SERVER['HTTP_X_FORWARDED_ORIGIN'] );
+        }
+        return $origin;
+    }
+
+    protected function is_origin_allowed( $origin ) {
+        $allowed = defined( 'PETIA_ALLOWED_ORIGINS' ) ? array_map( 'trim', explode( ',', PETIA_ALLOWED_ORIGINS ) ) : [ get_site_url() ];
+        return in_array( $origin, $allowed, true );
+    }
+
+    protected function get_secret_key() {
+        if ( ! defined( 'AUTH_KEY' ) || empty( AUTH_KEY ) || 'change_this_secret_key' === AUTH_KEY ) {
+            wp_die( __( 'AUTH_KEY must be defined in wp-config.php.', 'petia-app-bridge' ) );
+        }
+
+        return AUTH_KEY;
     }
 
     /**
@@ -690,6 +691,10 @@ class PetIA_App_Bridge {
             return $result;
         }
 
+        if ( ! is_ssl() ) {
+            return new WP_Error( 'rest_forbidden', __( 'SSL is required.', 'petia-app-bridge' ), [ 'status' => 403 ] );
+        }
+
         // Only secure our namespace routes.
         $route = isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '';
         if ( strpos( $route, '/wp-json/petia-app-bridge/v1/' ) === false ) {
@@ -734,7 +739,7 @@ class PetIA_App_Bridge {
      * Generate a simple JWT-like token.
      */
     protected function generate_token( $user_id ) {
-        $secret  = defined( 'AUTH_KEY' ) ? AUTH_KEY : 'change_this_secret_key';
+        $secret  = $this->get_secret_key();
         $header  = [ 'alg' => 'HS256', 'typ' => 'JWT' ];
         $payload = [
             'sub' => $user_id,
@@ -762,7 +767,7 @@ class PetIA_App_Bridge {
         }
 
         list( $header64, $payload64, $sig64 ) = $parts;
-        $secret   = defined( 'AUTH_KEY' ) ? AUTH_KEY : 'change_this_secret_key';
+        $secret   = $this->get_secret_key();
         $signature = $this->urlsafe_b64decode( $sig64 );
         $valid_sig = hash_hmac( 'sha256', $header64 . '.' . $payload64, $secret, true );
 
@@ -867,12 +872,30 @@ class PetIA_App_Bridge {
     }
 
     public function register_admin_page() {
-        add_users_page(
-            __( 'PetIA App Bridge Access', 'petia-app-bridge' ),
-            __( 'PetIA App Bridge Access', 'petia-app-bridge' ),
+        add_menu_page(
+            __( 'PetIA App Bridge', 'petia-app-bridge' ),
+            __( 'PetIA Bridge', 'petia-app-bridge' ),
             'manage_options',
-            'petia-app-bridge-access',
+            'petia-app-bridge',
             [ $this, 'render_access_page' ]
+        );
+
+        add_submenu_page(
+            'petia-app-bridge',
+            __( 'Access Control', 'petia-app-bridge' ),
+            __( 'Access Control', 'petia-app-bridge' ),
+            'manage_options',
+            'petia-app-bridge',
+            [ $this, 'render_access_page' ]
+        );
+
+        add_submenu_page(
+            'petia-app-bridge',
+            __( 'Run Tests', 'petia-app-bridge' ),
+            __( 'Run Tests', 'petia-app-bridge' ),
+            'manage_options',
+            'petia-app-bridge-tests',
+            [ $this, 'render_tests_page' ]
         );
     }
 
@@ -916,6 +939,27 @@ class PetIA_App_Bridge {
             echo '<tr><td>' . esc_html( $user->user_login ) . '</td><td><input type="checkbox" name="access[' . intval( $user->ID ) . ']" value="1" ' . $checked . '></td><td><input type="date" name="start_date[' . intval( $user->ID ) . ']" value="' . esc_attr( $start_v ) . '"></td><td><input type="date" name="end_date[' . intval( $user->ID ) . ']" value="' . esc_attr( $end_v ) . '"></td></tr>';
         }
         echo '</tbody></table><p><input type="submit" class="button-primary" value="' . esc_attr__( 'Save Changes', 'petia-app-bridge' ) . '"></p></form></div>';
+    }
+
+    public function render_tests_page() {
+        echo '<div class="wrap"><h1>' . esc_html__( 'PetIA App Bridge Tests', 'petia-app-bridge' ) . '</h1>';
+
+        if ( isset( $_POST['petia_tests_nonce'] ) && wp_verify_nonce( $_POST['petia_tests_nonce'], 'petia_run_tests' ) ) {
+            $root    = dirname( plugin_dir_path( __FILE__ ) );
+            $command = 'cd ' . escapeshellarg( $root ) . ' && npm test 2>&1';
+            $output  = shell_exec( $command );
+            if ( ! $output ) {
+                $output = __( 'Failed to run tests or no output produced.', 'petia-app-bridge' );
+            }
+            echo '<pre>' . esc_html( $output ) . '</pre>';
+        } else {
+            echo '<p>' . esc_html__( 'Run the project\'s JavaScript tests.', 'petia-app-bridge' ) . '</p>';
+        }
+
+        echo '<form method="post">';
+        wp_nonce_field( 'petia_run_tests', 'petia_tests_nonce' );
+        submit_button( __( 'Run Tests', 'petia-app-bridge' ) );
+        echo '</form></div>';
     }
 }
 
