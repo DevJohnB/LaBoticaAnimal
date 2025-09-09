@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "test": "NODE_OPTIONS=--experimental-vm-modules jest",
-    "start": "cross-env NODE_OPTIONS=--experimental-vm-modules jest"
+    "start": "cross-env NODE_OPTIONS=--experimental-vm-modules jest",
+    "build": "echo 'No build step defined'"
   },
   "devDependencies": {
     "jest": "^29.7.0",
