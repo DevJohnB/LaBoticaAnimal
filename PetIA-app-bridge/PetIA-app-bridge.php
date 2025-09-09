@@ -14,10 +14,6 @@ if ( file_exists( __DIR__ . '/vendor/autoload.php' ) ) {
     require_once __DIR__ . '/vendor/autoload.php';
 }
 
-if ( ! defined( 'PETIA_ALLOWED_ORIGINS' ) ) {
-    define( 'PETIA_ALLOWED_ORIGINS', '*' );
-}
-
 define( 'PETIA_ABSPATH', plugin_dir_path( __FILE__ ) );
 
 require_once PETIA_ABSPATH . 'includes/class-petia-token-manager.php';
