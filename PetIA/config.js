@@ -13,4 +13,3 @@ export default {
     products: "/wp-json/wc/v3/products"
   }
 };
-

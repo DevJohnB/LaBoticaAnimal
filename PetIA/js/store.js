@@ -1,7 +1,16 @@
 import config from '../config.js';
 import { logout } from './auth.js';
 
+function init() {
+  const logoutBtn = document.getElementById('logoutBtn');
+  if (logoutBtn) {
+    logoutBtn.addEventListener('click', logout);
+  }
+  loadProducts();
+}
+
 document.getElementById('logoutBtn').addEventListener('click', logout);
+
 
 async function loadProducts() {
   const { products } = config.woocommerce;
@@ -38,4 +47,7 @@ function renderProducts(products) {
   });
 }
 
+document.addEventListener('DOMContentLoaded', init);
+
 loadProducts();
+
