@@ -11,6 +11,7 @@ Plugin de WordPress que expone endpoints REST para ser consumidos por la aplicac
 
 ## Instalación
 1. Copia la carpeta `PetIA-app-bridge` en `wp-content/plugins/`.
-2. Asegúrate de definir `AUTH_KEY` en `wp-config.php`.
-3. (Opcional) Define `PETIA_ALLOWED_ORIGINS` para restringir los orígenes permitidos.
-4. Activa el plugin desde el panel de WordPress.
+2. Ejecuta `composer install` dentro de esa carpeta para instalar las dependencias PHP.
+3. Asegúrate de definir `AUTH_KEY` en `wp-config.php`.
+4. (Opcional) Define `PETIA_ALLOWED_ORIGINS` para restringir los orígenes permitidos.
+5. Activa el plugin desde el panel de WordPress.

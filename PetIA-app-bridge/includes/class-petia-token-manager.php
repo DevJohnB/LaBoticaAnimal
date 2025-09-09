@@ -13,6 +13,9 @@ class PetIA_Token_Manager {
     }
 
     public function generate_token( $user_id ) {
+        if ( ! class_exists( 'Firebase\\JWT\\JWT' ) ) {
+            return new \WP_Error( 'missing_dependency', 'Firebase JWT library is required.' );
+        }
         $issued = time();
         $payload = [
             'iss' => get_site_url(),
@@ -25,6 +28,9 @@ class PetIA_Token_Manager {
     }
 
     public function decode_token( $token ) {
+        if ( ! class_exists( 'Firebase\\JWT\\JWT' ) ) {
+            return new \WP_Error( 'missing_dependency', 'Firebase JWT library is required.' );
+        }
         return JWT::decode( $token, new Key( $this->secret, 'HS256' ) );
     }
 

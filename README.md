@@ -4,8 +4,9 @@ Este repositorio contiene el plugin de WordPress **PetIA App Bridge** y la aplic
 
 ## Plugin
 1. Copia `PetIA-app-bridge/` en `wp-content/plugins/`.
-2. Define `AUTH_KEY` en `wp-config.php` y, opcionalmente, `PETIA_ALLOWED_ORIGINS`.
-3. Activa el plugin desde el panel de WordPress.
+2. Ejecuta `composer install` dentro de esa carpeta para instalar las dependencias PHP.
+3. Define `AUTH_KEY` en `wp-config.php` y, opcionalmente, `PETIA_ALLOWED_ORIGINS`.
+4. Activa el plugin desde el panel de WordPress.
 
 ## Aplicación
 1. Sirve la carpeta `PetIA/` en cualquier servidor estático.
