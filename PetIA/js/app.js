@@ -1,12 +1,10 @@
 import config from '../config.js';
-import { logout } from './auth.js';
+import { logout, validateToken } from './auth.js';
 
 async function getProfile() {
+  const valid = await validateToken();
+  if (!valid) return;
   const token = localStorage.getItem('token');
-  if (!token) {
-    window.location.href = 'index.html';
-    return;
-  }
   const url = config.apiBaseUrl + config.endpoints.profile;
   const res = await fetch(url, {
     headers: { 'Authorization': `Bearer ${token}` }
@@ -86,7 +84,9 @@ async function updateProfile(e) {
   }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+  const valid = await validateToken();
+  if (!valid) return;
   if (document.getElementById('userData')) {
     getProfile();
   }

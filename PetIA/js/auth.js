@@ -16,10 +16,6 @@ async function login(identifier, password) {
   }
   const data = await res.json();
   localStorage.setItem('token', data.token);
-  if (data.consumer_key && data.consumer_secret) {
-    localStorage.setItem('consumerKey', data.consumer_key);
-    localStorage.setItem('consumerSecret', data.consumer_secret);
-  }
 }
 
 async function requestPasswordReset(email) {
@@ -31,11 +27,43 @@ async function requestPasswordReset(email) {
   });
 }
 
-export function logout() {
+export async function logout() {
+  const token = localStorage.getItem('token');
+  if (token) {
+    const url = config.apiBaseUrl + config.endpoints.logout;
+    try {
+      await fetch(url, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+    } catch (err) {
+      console.error('Logout error', err);
+    }
+  }
   localStorage.removeItem('token');
-  localStorage.removeItem('consumerKey');
-  localStorage.removeItem('consumerSecret');
   window.location.href = 'index.html';
+}
+
+export async function validateToken() {
+  const token = localStorage.getItem('token');
+  if (!token) {
+    await logout();
+    return false;
+  }
+  const url = config.apiBaseUrl + config.endpoints.validateToken;
+  try {
+    const res = await fetch(url, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    if (!res.ok) {
+      await logout();
+      return false;
+    }
+    return true;
+  } catch (err) {
+    await logout();
+    return false;
+  }
 }
 
 // Event listeners
