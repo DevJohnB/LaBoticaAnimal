@@ -494,7 +494,9 @@ class PetIA_App_Bridge {
     /**
      * Retrieve products.
      */
-    public function handle_get_products( WP_REST_Request $request ) {
+
+public function handle_get_products( WP_REST_Request $request ) {
+
         if ( ! function_exists( 'wc_get_products' ) ) {
             return new WP_Error( 'woocommerce_missing', __( 'WooCommerce not available.', 'petia-app-bridge' ), [ 'status' => 500 ] );
         }

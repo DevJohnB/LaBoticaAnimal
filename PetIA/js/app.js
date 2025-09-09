@@ -13,7 +13,6 @@ async function getProfile() {
   });
   if (res.ok) {
     const data = await res.json();
-    renderProfileForm(data);
   } else {
     logout();
   }
