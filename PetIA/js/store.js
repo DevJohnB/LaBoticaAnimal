@@ -9,6 +9,8 @@ function init() {
   loadProducts();
 }
 
+document.getElementById('logoutBtn').addEventListener('click', logout);
+
 async function loadProducts() {
   const { products } = config.woocommerce;
   const consumerKey = localStorage.getItem('consumerKey');
@@ -45,3 +47,6 @@ function renderProducts(products) {
 }
 
 document.addEventListener('DOMContentLoaded', init);
+
+loadProducts();
+
