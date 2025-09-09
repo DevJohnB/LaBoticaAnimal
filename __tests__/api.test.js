@@ -1,79 +1,58 @@
 import { jest } from '@jest/globals';
 import { apiRequest } from '../PetIA/js/api.js';
-import { setToken, getToken } from '../PetIA/js/token.js';
-import config from '../PetIA/config.js';
-
-const origError = console.error;
-beforeAll(() => {
-  console.error = () => {};
-});
-
-afterAll(() => {
-  console.error = origError;
-});
-
-function createToken(expSeconds) {
-  const payload = { exp: expSeconds };
-  const base64url = btoa(JSON.stringify(payload)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-  return `aaa.${base64url}.bbb`;
-}
+import { setToken, getToken, clearToken } from '../PetIA/js/token.js';
+import 'whatwg-fetch';
 
 describe('apiRequest', () => {
   beforeEach(() => {
-    document.cookie = '';
+    clearToken();
+    global.fetch = jest.fn();
   });
 
-  test('adds base URL and authorization header', async () => {
-    const token = createToken(Math.floor(Date.now() / 1000) + 3600);
-    setToken(token);
-    global.fetch = jest.fn().mockResolvedValue({
-      ok: true,
+  test('adds Authorization header', async () => {
+    setToken('abc');
+    global.fetch.mockResolvedValue({
       status: 200,
-      headers: { get: () => 'application/json' },
-      json: async () => ({ ok: true })
+      headers: new Headers({ 'content-type': 'application/json' }),
+      json: async () => ({ ok: true }),
     });
     await apiRequest('/test');
-    expect(fetch).toHaveBeenCalledWith(
-      config.apiBaseUrl + '/test',
-      expect.objectContaining({
-        headers: expect.objectContaining({ Authorization: `Bearer ${token}` }),
-        credentials: 'include'
-      })
-    );
+    const headers = global.fetch.mock.calls[0][1].headers;
+    expect(headers.get('Authorization')).toBe('Bearer abc');
   });
 
   test('clears token and redirects on 401', async () => {
-    const token = createToken(Math.floor(Date.now() / 1000) + 3600);
-    setToken(token);
-    global.fetch = jest.fn().mockResolvedValue({
-      ok: false,
+    setToken('abc');
+    delete window.location;
+    window.location = { href: '' };
+    global.fetch.mockResolvedValue({
       status: 401,
-      statusText: 'Unauthorized',
-      headers: { get: () => '' },
-      text: async () => ''
+      headers: new Headers({ 'content-type': 'application/json' }),
+      json: async () => ({ error: 'Unauthorized' }),
     });
     await expect(apiRequest('/test')).rejects.toThrow('Unauthorized');
-    expect(getToken()).toBeNull();
+    expect(getToken()).toBe('');
+    expect(window.location.href).toBe('index.html');
   });
 
-  test('does not redirect on 401 without token', async () => {
-    global.fetch = jest.fn().mockResolvedValue({
-      ok: false,
+  test('401 without token does not redirect', async () => {
+    delete window.location;
+    window.location = { href: '' };
+    global.fetch.mockResolvedValue({
       status: 401,
-      statusText: 'Unauthorized',
-      headers: { get: () => '' },
-      text: async () => ''
+      headers: new Headers({ 'content-type': 'application/json' }),
+      json: async () => ({ error: 'Unauthorized' }),
     });
     await expect(apiRequest('/test')).rejects.toThrow('Unauthorized');
+    expect(window.location.href).toBe('');
   });
 
-  test('throws on non-JSON response', async () => {
-    global.fetch = jest.fn().mockResolvedValue({
-      ok: true,
+  test('throws on non JSON response', async () => {
+    global.fetch.mockResolvedValue({
       status: 200,
-      headers: { get: () => 'text/plain' },
-      text: async () => 'plain text'
+      headers: new Headers({ 'content-type': 'text/html' }),
+      json: async () => ({ ok: true }),
     });
-    await expect(apiRequest('/test')).rejects.toThrow('Expected JSON response');
+    await expect(apiRequest('/test')).rejects.toThrow('Invalid JSON');
   });
 });

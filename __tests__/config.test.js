@@ -3,24 +3,24 @@ import { jest } from '@jest/globals';
 describe('config', () => {
   afterEach(() => {
     delete process.env.API_BASE_URL;
-    delete global.window.API_BASE_URL;
+    delete global.API_BASE_URL;
     jest.resetModules();
   });
 
-  test('uses API_BASE_URL env variable', async () => {
-    process.env.API_BASE_URL = 'https://example.com';
-    const config = (await import('../PetIA/config.js')).default;
-    expect(config.apiBaseUrl).toBe('https://example.com');
+  test('process.env has priority', async () => {
+    process.env.API_BASE_URL = 'http://env';
+    const mod = await import('../PetIA/config.js');
+    expect(mod.default.apiBaseUrl).toBe('http://env');
   });
 
-  test('uses global API_BASE_URL when env variable is absent', async () => {
-    global.window.API_BASE_URL = 'https://window.example.com';
-    const config = (await import('../PetIA/config.js')).default;
-    expect(config.apiBaseUrl).toBe('https://window.example.com');
+  test('window.API_BASE_URL is second', async () => {
+    global.API_BASE_URL = 'http://window';
+    const mod = await import('../PetIA/config.js');
+    expect(mod.default.apiBaseUrl).toBe('http://window');
   });
 
-  test('falls back to default', async () => {
-    const config = (await import('../PetIA/config.js')).default;
-    expect(config.apiBaseUrl).toBe('https://laboticaanimal.com');
+  test('uses default when unset', async () => {
+    const mod = await import('../PetIA/config.js');
+    expect(mod.default.apiBaseUrl).toBe('https://laboticaanimal.com');
   });
 });

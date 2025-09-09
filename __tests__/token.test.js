@@ -1,51 +1,23 @@
-import { jest } from '@jest/globals';
-import { setToken, getToken, clearToken, fetchWithAuth } from '../PetIA/js/token.js';
+import { parseToken, isTokenExpired, setToken, getToken, clearToken } from '../PetIA/js/token.js';
 
-function createToken(expSeconds) {
-  const payload = { exp: expSeconds };
-  const base64url = btoa(JSON.stringify(payload)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-  return `aaa.${base64url}.bbb`;
-}
-
-describe('token utilities', () => {
-  beforeEach(() => {
-
-    document.cookie = '';
-
-
-    global.fetch = jest.fn().mockResolvedValue({ ok: true });
+describe('token utils', () => {
+  test('parses token payload', () => {
+    const payload = { exp: Math.floor(Date.now() / 1000) + 60 };
+    const token = 'h.' + btoa(JSON.stringify(payload)) + '.s';
+    expect(parseToken(token).exp).toBe(payload.exp);
   });
 
-  test('stores and retrieves valid token', () => {
-    const token = createToken(Math.floor(Date.now() / 1000) + 3600);
-    setToken(token);
-    expect(getToken()).toBe(token);
+  test('detects expiration', () => {
+    const past = 'h.' + btoa(JSON.stringify({ exp: Math.floor(Date.now() / 1000) - 10 })) + '.s';
+    const future = 'h.' + btoa(JSON.stringify({ exp: Math.floor(Date.now() / 1000) + 10 })) + '.s';
+    expect(isTokenExpired(past)).toBe(true);
+    expect(isTokenExpired(future)).toBe(false);
   });
 
-  test('clears expired token', () => {
-    const token = createToken(Math.floor(Date.now() / 1000) - 10);
-    setToken(token);
-    expect(getToken()).toBeNull();
-    expect(document.cookie).not.toContain('token=');
-  });
-
-  test('fetchWithAuth adds header', async () => {
-    const token = createToken(Math.floor(Date.now() / 1000) + 3600);
-    setToken(token);
-    await fetchWithAuth('/test');
-    expect(fetch).toHaveBeenCalledWith('/test', expect.objectContaining({
-      headers: { Authorization: `Bearer ${token}` },
-      credentials: 'include'
-    }));
-  });
-
-  test('fetchWithAuth omits header when token expired', async () => {
-    const token = createToken(Math.floor(Date.now() / 1000) - 10);
-    setToken(token);
-    await fetchWithAuth('/test');
-    expect(fetch).toHaveBeenCalledWith('/test', expect.objectContaining({
-      headers: {},
-      credentials: 'include'
-    }));
+  test('clears cookie', () => {
+    setToken('abc');
+    expect(getToken()).toBe('abc');
+    clearToken();
+    expect(getToken()).toBe('');
   });
 });

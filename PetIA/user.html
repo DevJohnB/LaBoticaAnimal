@@ -1,25 +1,20 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PetIA - Usuario</title>
-  <link rel="stylesheet" href="css/style.css">
-  <link rel="stylesheet" href="css/responsive.css">
-  <script defer src="js/i18n.js"></script>
-  <script type="module" src="js/app.js"></script>
+  <meta charset="UTF-8" />
+  <title>PetIA Profile</title>
 </head>
-<body class="bg-light">
-  <nav class="navbar">
-    <a href="user.html" data-i18n="menu_profile">Perfil</a>
-    <a href="chat.html" data-i18n="menu_chat">Chat</a>
-    <a href="store.html" data-i18n="menu_store">Tienda</a>
-    <a href="policy.html" data-i18n="menu_policy">Políticas</a>
-    <button id="logoutBtn" class="btn-secondary" data-i18n="logout">Salir</button>
-  </nav>
-  <main class="content">
-    <h1 data-i18n="user_info">Información del usuario</h1>
-    <div id="userData"></div>
-  </main>
+<body>
+  <h1>User Profile</h1>
+  <div id="profile"></div>
+  <script type="module">
+    import config from './config.js';
+    import { apiRequest } from './js/api.js';
+    async function load() {
+      const data = await apiRequest(config.endpoints.profile);
+      document.getElementById('profile').textContent = JSON.stringify(data);
+    }
+    load();
+  </script>
 </body>
 </html>
