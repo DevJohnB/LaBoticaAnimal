@@ -161,16 +161,38 @@ class App_Bridge {
     }
 
     public function handle_login( \WP_REST_Request $request ) {
+        $email    = sanitize_email( $request['email'] ?? '' );
+        $username = sanitize_user( $request['username'] ?? '' );
+        $password = sanitize_text_field( $request['password'] ?? '' );
+
+        if ( ! $email && ! $username ) {
+            return new \WP_Error( 'missing_email', 'Email is required', [ 'status' => 400 ] );
+        }
+        if ( ! $password ) {
+            return new \WP_Error( 'missing_password', 'Password is required', [ 'status' => 400 ] );
+        }
+
+        $user = null;
+        if ( $email ) {
+            $user = get_user_by( 'email', $email );
+        }
+        if ( ! $user && $username ) {
+            $user = get_user_by( 'login', $username );
+        }
+        if ( ! $user ) {
+            return new \WP_Error( 'invalid_username', 'Invalid email or username', [ 'status' => 401 ] );
+        }
+
         $creds = [
-            'user_login'    => $request['username'],
-            'user_password' => $request['password'],
+            'user_login'    => $user->user_login,
+            'user_password' => $password,
             'remember'      => true,
         ];
         $user = wp_signon( $creds );
         if ( is_wp_error( $user ) ) {
             return $user;
         }
-        $token = $this->token_manager->generate_token( $user->ID );
+        $token       = $this->token_manager->generate_token( $user->ID );
         $wp_response = rest_ensure_response( [ 'success' => true ] );
         $wp_response->header( 'Authorization', 'Bearer ' . $token );
         return $wp_response;

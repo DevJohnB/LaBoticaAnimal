@@ -7,7 +7,7 @@
 <body>
   <h1>Login</h1>
   <form id="loginForm">
-    <input type="text" id="username" placeholder="Username" />
+    <input type="email" id="email" placeholder="Email" />
     <input type="password" id="password" placeholder="Password" />
     <button type="submit">Login</button>
   </form>
@@ -20,7 +20,7 @@
       const res = await fetch(config.apiBaseUrl + config.endpoints.login, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: username.value, password: password.value }),
+        body: JSON.stringify({ email: email.value, password: password.value }),
       });
       const token = res.headers.get('Authorization')?.split(' ')[1];
       if (token) {
