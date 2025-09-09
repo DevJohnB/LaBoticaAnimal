@@ -17,6 +17,24 @@ if ( ! defined( 'PETIA_ALLOWED_ORIGINS' ) ) {
 
 if ( file_exists( __DIR__ . '/vendor/autoload.php' ) ) {
     require __DIR__ . '/vendor/autoload.php';
+} else {
+    add_action(
+        'admin_notices',
+        function () {
+            echo '<div class="notice notice-error"><p>' . esc_html__( 'PetIA App Bridge requires Composer dependencies. Please run composer install.', 'petia-app-bridge' ) . '</p></div>';
+        }
+    );
+    return;
+}
+
+if ( ! class_exists( '\\Firebase\\JWT\\JWT' ) ) {
+    add_action(
+        'admin_notices',
+        function () {
+            echo '<div class="notice notice-error"><p>' . esc_html__( 'PetIA App Bridge requires the firebase/php-jwt library. Please run composer install.', 'petia-app-bridge' ) . '</p></div>';
+        }
+    );
+    return;
 }
 
 require_once __DIR__ . '/includes/class-petia-app-bridge.php';
