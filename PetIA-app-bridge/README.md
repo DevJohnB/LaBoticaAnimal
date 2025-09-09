@@ -50,7 +50,7 @@ Este plugin de WordPress expone un conjunto de endpoints REST para que una aplic
 
 - `GET /wp-json/petia-app-bridge/v1/brands`
   - Devuelve la lista de marcas de productos con nombre, descripción, slug e imagen.
-
+  - 
 Todos los endpoints, con excepción de **login**, **register**, **password-reset-request** y **password-reset**, requieren enviar el token en el encabezado `Authorization`.
 
 ## Control de acceso
