@@ -17,7 +17,6 @@ class PetIA_App_Bridge {
         add_action( 'rest_api_init', [ $this, 'register_routes' ] );
         add_filter( 'rest_authentication_errors', [ $this, 'authenticate_request' ] );
         add_action( 'rest_api_init', [ $this, 'add_cors_support' ], 15 );
-        add_action( 'init', [ $this, 'maybe_handle_preflight' ] );
 
         if ( is_admin() ) {
             add_action( 'admin_menu', [ $this, 'register_admin_page' ] );
@@ -131,10 +130,7 @@ class PetIA_App_Bridge {
             $allowed = $this->is_origin_allowed( $origin );
 
             if ( $origin && $allowed ) {
-                header( "Access-Control-Allow-Origin: {$origin}" );
-                header( 'Access-Control-Allow-Methods: GET, POST, OPTIONS' );
-                header( 'Access-Control-Allow-Headers: Authorization, Content-Type' );
-                header( 'Access-Control-Allow-Credentials: true' );
+              $this->send_cors_headers( $origin );
             }
 
             if ( 'OPTIONS' === $_SERVER['REQUEST_METHOD'] ) {
@@ -153,23 +149,33 @@ class PetIA_App_Bridge {
     /**
      * Handle browser preflight requests.
      */
-    public function maybe_handle_preflight() {
-        if ( isset( $_SERVER['REQUEST_METHOD'] ) && 'OPTIONS' === $_SERVER['REQUEST_METHOD'] ) {
-            $origin  = $this->get_request_origin();
-            $allowed = $this->is_origin_allowed( $origin );
-
-            if ( $origin && $allowed ) {
-                header( "Access-Control-Allow-Origin: {$origin}" );
-                header( 'Access-Control-Allow-Methods: GET, POST, OPTIONS' );
-                header( 'Access-Control-Allow-Headers: Authorization, Content-Type' );
-                header( 'Access-Control-Allow-Credentials: true' );
-                status_header( 200 );
-            } else {
-                status_header( 403 );
-            }
-
-            exit;
+    protected function get_request_origin() {
+        $origin = '';
+        if ( ! empty( $_SERVER['HTTP_ORIGIN'] ) ) {
+            $origin = trim( $_SERVER['HTTP_ORIGIN'] );
+        } elseif ( ! empty( $_SERVER['HTTP_X_FORWARDED_ORIGIN'] ) ) {
+            $origin = trim( $_SERVER['HTTP_X_FORWARDED_ORIGIN'] );
         }
+        return $origin;
+    }
+
+    protected function is_origin_allowed( $origin ) {
+        $allowed = defined( 'PETIA_ALLOWED_ORIGINS' ) ? array_map( 'trim', explode( ',', PETIA_ALLOWED_ORIGINS ) ) : [ get_site_url() ];
+        return in_array( $origin, $allowed, true );
+    }
+
+    protected function send_cors_headers( $origin ) {
+        header( "Access-Control-Allow-Origin: {$origin}" );
+        header( 'Access-Control-Allow-Methods: GET, POST, OPTIONS' );
+        header( 'Access-Control-Allow-Headers: Authorization, Content-Type' );
+        header( 'Access-Control-Allow-Credentials: true' );
+    }
+
+    protected function get_secret_key() {
+        if ( ! defined( 'AUTH_KEY' ) || empty( AUTH_KEY ) || 'change_this_secret_key' === AUTH_KEY ) {
+            wp_die( __( 'AUTH_KEY must be defined in wp-config.php.', 'petia-app-bridge' ) );
+
+        return AUTH_KEY;
     }
 
     protected function get_request_origin() {
@@ -199,8 +205,9 @@ class PetIA_App_Bridge {
      * Handle user registration.
      */
     public function handle_register( WP_REST_Request $request ) {
-        $email    = sanitize_email( $request->get_param( 'email' ) );
-        $password = $request->get_param( 'password' );
+        $params   = $request->get_json_params();
+        $email    = isset( $params['email'] ) ? sanitize_email( wp_unslash( $params['email'] ) ) : '';
+        $password = isset( $params['password'] ) ? wp_unslash( $params['password'] ) : '';
 
         if ( empty( $email ) || empty( $password ) ) {
             return new WP_Error( 'missing_fields', __( 'Email and password are required.', 'petia-app-bridge' ), [ 'status' => 400 ] );
@@ -237,8 +244,9 @@ class PetIA_App_Bridge {
      * Handle user login and token generation.
      */
     public function handle_login( WP_REST_Request $request ) {
-        $email    = sanitize_email( $request->get_param( 'email' ) );
-        $password = $request->get_param( 'password' );
+        $params   = $request->get_json_params();
+        $email    = isset( $params['email'] ) ? sanitize_email( wp_unslash( $params['email'] ) ) : '';
+        $password = isset( $params['password'] ) ? wp_unslash( $params['password'] ) : '';
 
         if ( empty( $email ) || empty( $password ) ) {
             return new WP_Error( 'missing_fields', __( 'Email and password are required.', 'petia-app-bridge' ), [ 'status' => 400 ] );
@@ -310,8 +318,9 @@ class PetIA_App_Bridge {
      * Send password reset email to user.
      */
     public function handle_password_reset_request( WP_REST_Request $request ) {
-        $username = sanitize_user( $request->get_param( 'username' ) );
-        $email    = sanitize_email( $request->get_param( 'email' ) );
+        $params   = $request->get_json_params();
+        $username = isset( $params['username'] ) ? sanitize_user( wp_unslash( $params['username'] ) ) : '';
+        $email    = isset( $params['email'] ) ? sanitize_email( wp_unslash( $params['email'] ) ) : '';
 
         if ( empty( $username ) && empty( $email ) ) {
             return new WP_Error( 'missing_fields', __( 'Username or email is required.', 'petia-app-bridge' ), [ 'status' => 400 ] );
@@ -872,16 +881,35 @@ class PetIA_App_Bridge {
     }
 
     public function register_admin_page() {
-        add_users_page(
-            __( 'PetIA App Bridge Access', 'petia-app-bridge' ),
-            __( 'PetIA App Bridge Access', 'petia-app-bridge' ),
+        add_menu_page(
+            __( 'PetIA App Bridge', 'petia-app-bridge' ),
+            __( 'PetIA Bridge', 'petia-app-bridge' ),
             'manage_options',
-            'petia-app-bridge-access',
-            [ $this, 'render_access_page' ]
+            'petia-app-bridge',
+            [ $this, 'render_admin_page' ]
         );
     }
 
-    public function render_access_page() {
+    public function render_admin_page() {
+        $tab = isset( $_GET['tab'] ) ? sanitize_key( $_GET['tab'] ) : 'access';
+        $base_url = menu_page_url( 'petia-app-bridge', false );
+
+        echo '<div class="wrap">';
+        echo '<h1>' . esc_html__( 'PetIA App Bridge', 'petia-app-bridge' ) . '</h1>';
+        echo '<h2 class="nav-tab-wrapper">';
+        echo '<a href="' . esc_url( add_query_arg( 'tab', 'access', $base_url ) ) . '" class="nav-tab ' . ( 'tests' !== $tab ? 'nav-tab-active' : '' ) . '">' . esc_html__( 'Access Control', 'petia-app-bridge' ) . '</a>';
+        echo '<a href="' . esc_url( add_query_arg( 'tab', 'tests', $base_url ) ) . '" class="nav-tab ' . ( 'tests' === $tab ? 'nav-tab-active' : '' ) . '">' . esc_html__( 'Run Tests', 'petia-app-bridge' ) . '</a>';
+        echo '</h2>';
+
+        if ( 'tests' === $tab ) {
+            $this->render_tests_tab();
+        } else {
+            $this->render_access_tab();
+        }
+        echo '</div>';
+    }
+
+    private function render_access_tab() {
         if ( isset( $_POST['petia_access_nonce'] ) && wp_verify_nonce( $_POST['petia_access_nonce'], 'petia_save_access' ) ) {
             $users = get_users( [ 'fields' => [ 'ID' ] ] );
             global $wpdb;
@@ -908,7 +936,6 @@ class PetIA_App_Bridge {
         global $wpdb;
         $table = $wpdb->prefix . 'petia_app_bridge_access';
 
-        echo '<div class="wrap"><h1>' . esc_html__( 'PetIA App Bridge Access', 'petia-app-bridge' ) . '</h1>';
         echo '<form method="post">';
         wp_nonce_field( 'petia_save_access', 'petia_access_nonce' );
         echo '<table class="widefat"><thead><tr><th>' . esc_html__( 'User', 'petia-app-bridge' ) . '</th><th>' . esc_html__( 'Allowed', 'petia-app-bridge' ) . '</th><th>' . esc_html__( 'Start Date', 'petia-app-bridge' ) . '</th><th>' . esc_html__( 'End Date', 'petia-app-bridge' ) . '</th></tr></thead><tbody>';
@@ -920,7 +947,26 @@ class PetIA_App_Bridge {
             $end_v   = $row ? substr( $row->end_date, 0, 10 ) : '9999-12-31';
             echo '<tr><td>' . esc_html( $user->user_login ) . '</td><td><input type="checkbox" name="access[' . intval( $user->ID ) . ']" value="1" ' . $checked . '></td><td><input type="date" name="start_date[' . intval( $user->ID ) . ']" value="' . esc_attr( $start_v ) . '"></td><td><input type="date" name="end_date[' . intval( $user->ID ) . ']" value="' . esc_attr( $end_v ) . '"></td></tr>';
         }
-        echo '</tbody></table><p><input type="submit" class="button-primary" value="' . esc_attr__( 'Save Changes', 'petia-app-bridge' ) . '"></p></form></div>';
+        echo '</tbody></table><p><input type="submit" class="button-primary" value="' . esc_attr__( 'Save Changes', 'petia-app-bridge' ) . '"></p></form>';
+    }
+
+    private function render_tests_tab() {
+        if ( isset( $_POST['petia_tests_nonce'] ) && wp_verify_nonce( $_POST['petia_tests_nonce'], 'petia_run_tests' ) ) {
+            $root    = dirname( plugin_dir_path( __FILE__ ) );
+            $command = 'cd ' . escapeshellarg( $root ) . ' && npm test 2>&1';
+            $output  = shell_exec( $command );
+            if ( ! $output ) {
+                $output = __( 'Failed to run tests or no output produced.', 'petia-app-bridge' );
+            }
+            echo '<pre>' . esc_html( $output ) . '</pre>';
+        } else {
+            echo '<p>' . esc_html__( 'Run the project\'s JavaScript tests.', 'petia-app-bridge' ) . '</p>';
+        }
+
+        echo '<form method="post">';
+        wp_nonce_field( 'petia_run_tests', 'petia_tests_nonce' );
+        submit_button( __( 'Run Tests', 'petia-app-bridge' ) );
+        echo '</form>';
     }
 }
 

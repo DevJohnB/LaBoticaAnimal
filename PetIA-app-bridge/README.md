@@ -1,76 +1,57 @@
 # PetIA App Bridge
 
-Este plugin de WordPress expone un conjunto de endpoints REST para que una aplicación externa pueda registrar y autenticar usuarios utilizando a WordPress como backend.
+Plugin de WordPress que expone endpoints REST para que aplicaciones externas usen WordPress y WooCommerce como backend.
 
-## Endpoints
+## Características
+- Registro y autenticación de usuarios mediante tokens firmados con `AUTH_KEY`.
+- Gestión de perfil, recuperación de contraseña y direcciones de pedidos.
+- Catálogo de categorías, productos y marcas.
+- Control de acceso por usuario con fechas de vigencia.
+- Menú de administración **PetIA Bridge** con pestañas de acceso y ejecución de pruebas.
+- Soporte CORS configurable mediante la constante `PETIA_ALLOWED_ORIGINS`.
 
-- `POST /wp-json/petia-app-bridge/v1/register`
-  - Crea un nuevo usuario en WordPress.
-  - Parámetros: `email`, `password`.
-  - El nombre de usuario se genera automáticamente y se devuelve en la respuesta.
-
-- `POST /wp-json/petia-app-bridge/v1/login`
-  - Autentica al usuario y devuelve un token.
-  - Parámetros: `email`, `password`.
-
-- `POST /wp-json/petia-app-bridge/v1/logout`
-  - Revoca el token actual enviado en el encabezado `Authorization: Bearer <token>`.
-
-- `GET /wp-json/petia-app-bridge/v1/validate-token`
-  - Verifica el token enviado en el encabezado `Authorization: Bearer <token>` y devuelve los datos del usuario si es válido.
-
-- `POST /wp-json/petia-app-bridge/v1/password-reset-request`
-  - Envía un correo de recuperación de contraseña al usuario.
-  - Parámetros: `username` o `email`.
-
-- `POST /wp-json/petia-app-bridge/v1/password-reset`
-  - Restablece la contraseña usando la clave recibida por correo.
-  - Parámetros: `login`, `key`, `password`.
-
-- `GET /wp-json/petia-app-bridge/v1/profile`
-  - Devuelve la información opcional del perfil del usuario autenticado.
-
-- `POST /wp-json/petia-app-bridge/v1/profile`
-  - Actualiza los campos opcionales del perfil del usuario autenticado.
-  - Parámetros (opcionales): `first_name`, `last_name`, `nickname`, `description`, `user_url`, `display_name`.
-
-- `GET /wp-json/petia-app-bridge/v1/order/<id>/addresses`
-  - Devuelve la información de facturación y envío del pedido del usuario autenticado.
-
-- `POST /wp-json/petia-app-bridge/v1/order/<id>/addresses`
-  - Actualiza la información de facturación y envío del pedido.
-  - Parámetros (opcionales): `billing` (objeto), `shipping` (objeto).
-
-- `GET /wp-json/petia-app-bridge/v1/product-categories`
-  - Devuelve la lista de categorías de productos con nombre, descripción, slug e imagen.
-
-- `GET /wp-json/petia-app-bridge/v1/products`
-  - Devuelve un listado de productos con nombre, descripción, slug, precio e imagen.
-  - Parámetros (opcionales): `per_page` (número de resultados por página), `page` (página).
-
-- `GET /wp-json/petia-app-bridge/v1/brands`
-  - Devuelve la lista de marcas de productos con nombre, descripción, slug e imagen.
-
-Todos los endpoints, con excepción de **login**, **register**, **password-reset-request** y **password-reset**, requieren enviar el token en el encabezado `Authorization`.
-
-## Control de acceso
-
-Al activarse, el plugin crea la tabla `wp_petia_app_bridge_access` con los campos:
-
-- `allowed` para habilitar o deshabilitar el acceso a los endpoints.
-- `start_date` con la fecha de inicio del acceso (por defecto la fecha en que se crea el registro).
-- `end_date` con la fecha de fin de acceso (por defecto `31/12/9999`).
-
-Al iniciar sesión, si el usuario no tiene registro en esta tabla se crea uno automáticamente con las fechas anteriores y se verifica que `end_date` sea mayor a la fecha actual. Si la fecha fin ya pasó, el acceso es rechazado. Desde el menú de administración **Usuarios → PetIA App Bridge Access** es posible modificar estas fechas para cada usuario.
+## Requisitos
+- WordPress 5.0 o superior.
+- WooCommerce.
+- Definir `AUTH_KEY` y `PETIA_ALLOWED_ORIGINS` en `wp-config.php`.
+- Node.js si se desean correr pruebas desde el administrador.
 
 ## Instalación
+1. Copia `PetIA-app-bridge` a `wp-content/plugins/`.
+2. Activa el plugin en el panel de WordPress.
+3. Configura `PETIA_ALLOWED_ORIGINS` con una lista separada por comas de dominios permitidos.
+4. Gestiona las fechas de acceso desde **PetIA Bridge** en la pestaña *Access Control*.
+5. (Opcional) Ejecuta las pruebas desde la pestaña *Run Tests* del mismo menú.
 
-1. Copiar la carpeta `PetIA-app-bridge` en el directorio `wp-content/plugins/` de WordPress.
-2. Activar el plugin desde el panel de administración.
-3. Desde el menú **Usuarios → PetIA App Bridge Access** se puede habilitar o deshabilitar el acceso a los endpoints para cada usuario. Por defecto todos los usuarios tienen acceso.
+## Endpoints
+### Autenticación
+- `POST /wp-json/petia-app-bridge/v1/register` – crea usuario (`email`, `password`).
+- `POST /wp-json/petia-app-bridge/v1/login` – devuelve token (`email`, `password`).
+- `POST /wp-json/petia-app-bridge/v1/logout` – revoca token.
+- `GET /wp-json/petia-app-bridge/v1/validate-token` – datos del usuario si el token es válido.
 
-## Notas de seguridad
+### Recuperación de contraseña
+- `POST /wp-json/petia-app-bridge/v1/password-reset-request` – envía correo de recuperación.
+- `POST /wp-json/petia-app-bridge/v1/password-reset` – restablece contraseña (`login`, `key`, `password`).
 
-El plugin limpia sus datos (tabla de acceso y transients de tokens revocados) al desinstalarse.
+### Perfil
+- `GET /wp-json/petia-app-bridge/v1/profile` – datos del usuario autenticado.
+- `POST /wp-json/petia-app-bridge/v1/profile` – actualiza campos opcionales (`first_name`, `last_name`, `nickname`, `description`, `user_url`, `display_name`).
 
-El token generado es similar a un JWT y se firma con `AUTH_KEY` de WordPress. Asegúrate de tener una clave única y secreta definida en `wp-config.php`.
+### Pedidos
+- `GET /wp-json/petia-app-bridge/v1/order/<id>/addresses` – direcciones de un pedido.
+- `POST /wp-json/petia-app-bridge/v1/order/<id>/addresses` – actualiza direcciones (`billing`, `shipping`).
+
+### Catálogo
+- `GET /wp-json/petia-app-bridge/v1/product-categories`.
+- `GET /wp-json/petia-app-bridge/v1/products` (`per_page`, `page`).
+- `GET /wp-json/petia-app-bridge/v1/brands`.
+
+Todos los endpoints, salvo **register**, **login**, **password-reset-request** y **password-reset**, requieren el encabezado `Authorization: Bearer <token>`.
+
+## Control de acceso
+Al activarse se crea la tabla `wp_petia_app_bridge_access` con los campos `allowed`, `start_date` y `end_date`. Desde la pestaña *Access Control* del menú **PetIA Bridge** se administra la vigencia del acceso de cada usuario.
+
+## Seguridad
+- El token se firma con `AUTH_KEY`, por lo que debe ser único y secreto.
+- El plugin elimina su tabla de acceso y transients de tokens revocados al desinstalarse.

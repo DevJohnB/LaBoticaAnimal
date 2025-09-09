@@ -1,25 +1,18 @@
 import config from '../config.js';
-import { setToken, getToken, clearToken, fetchWithAuth } from './token.js';
+import { setToken, getToken, clearToken } from './token.js';
+import { apiRequest } from './api.js';
 
 async function login(email, password) {
-  const url = config.apiBaseUrl + config.endpoints.login;
-  const payload = { email, password };
-  const res = await fetch(url, {
+  const data = await apiRequest(config.endpoints.login, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload)
+    body: JSON.stringify({ email, password })
   });
-  if (!res.ok) {
-    const message = await res.text();
-    throw new Error(message || 'Login failed');
-  }
-  const data = await res.json();
   setToken(data.token);
 }
 
 async function requestPasswordReset(email) {
-  const url = config.apiBaseUrl + config.endpoints.passwordResetRequest;
-  await fetch(url, {
+  await apiRequest(config.endpoints.passwordResetRequest, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email })
@@ -29,9 +22,8 @@ async function requestPasswordReset(email) {
 export async function logout() {
   const token = getToken();
   if (token) {
-    const url = config.apiBaseUrl + config.endpoints.logout;
     try {
-      await fetchWithAuth(url, { method: 'POST' });
+      await apiRequest(config.endpoints.logout, { method: 'POST' });
     } catch (err) {
       console.error('Logout error', err);
     }
@@ -46,16 +38,10 @@ export async function validateToken() {
     await logout();
     return false;
   }
-  const url = config.apiBaseUrl + config.endpoints.validateToken;
   try {
-    const res = await fetchWithAuth(url);
-    if (!res.ok) {
-      await logout();
-      return false;
-    }
+    await apiRequest(config.endpoints.validateToken);
     return true;
-  } catch (err) {
-    await logout();
+  } catch {
     return false;
   }
 }
