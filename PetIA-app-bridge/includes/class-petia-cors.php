@@ -4,6 +4,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 class PetIA_CORS {
+    protected $allow_all = false;
+    private $header_fn;
+
+    public function __construct( ?callable $header_fn = null ) {
+        $this->header_fn = $header_fn ?: 'header';
+    }
+
     public function add_cors_support() {
         remove_filter( 'rest_pre_serve_request', 'rest_send_cors_headers' );
         add_filter( 'rest_pre_serve_request', function( $value ) {
@@ -38,14 +45,19 @@ class PetIA_CORS {
     }
 
     public function is_origin_allowed( $origin ) {
-        $allowed = defined( 'PETIA_ALLOWED_ORIGINS' ) ? array_map( 'trim', explode( ',', PETIA_ALLOWED_ORIGINS ) ) : [ get_site_url() ];
-        return in_array( $origin, $allowed, true );
+        $allowed         = defined( 'PETIA_ALLOWED_ORIGINS' ) ? array_map( 'trim', explode( ',', PETIA_ALLOWED_ORIGINS ) ) : [ get_site_url() ];
+        $this->allow_all = in_array( '*', $allowed, true );
+        return $this->allow_all || in_array( $origin, $allowed, true );
     }
 
     protected function send_cors_headers( $origin ) {
-        header( "Access-Control-Allow-Origin: {$origin}" );
-        header( 'Access-Control-Allow-Methods: GET, POST, OPTIONS' );
-        header( 'Access-Control-Allow-Headers: Authorization, Content-Type' );
-        header( 'Access-Control-Allow-Credentials: true' );
+        $h = $this->header_fn;
+        $h( "Access-Control-Allow-Origin: {$origin}" );
+        if ( $this->allow_all ) {
+            $h( 'Vary: Origin' );
+        }
+        $h( 'Access-Control-Allow-Methods: GET, POST, OPTIONS' );
+        $h( 'Access-Control-Allow-Headers: Authorization, Content-Type' );
+        $h( 'Access-Control-Allow-Credentials: true' );
     }
 }
