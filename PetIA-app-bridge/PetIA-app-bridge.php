@@ -57,7 +57,7 @@ class PetIA_App_Bridge {
 
         register_rest_route( 'petia-app-bridge/v1', '/validate-token', [
             'methods'             => 'GET',
-            'callback'            => [ $this, 'handle_validate_token' ],
+            'callback'            => [ $this, 'handle_get_profile' ],
             'permission_callback' => '__return_true',
         ] );
 
@@ -144,12 +144,8 @@ class PetIA_App_Bridge {
             }
 
             if ( 'OPTIONS' === $_SERVER['REQUEST_METHOD'] ) {
-                status_header( $origin_valid ? 200 : 400 );
+                status_header( 200 );
                 return true;
-            }
-
-            if ( ! $origin_valid ) {
-                status_header( 400 );
             }
 
             return $value;
@@ -179,11 +175,9 @@ class PetIA_App_Bridge {
                 header( 'Access-Control-Allow-Methods: GET, POST, OPTIONS' );
                 header( 'Access-Control-Allow-Headers: Authorization, Content-Type' );
                 header( 'Access-Control-Allow-Credentials: true' );
-                status_header( 200 );
-            } else {
-                status_header( 400 );
             }
 
+            status_header( 200 );
             exit;
         }
     }
@@ -300,40 +294,6 @@ class PetIA_App_Bridge {
     }
 
     /**
-     * Validate authentication token and return user info.
-     */
-    public function handle_validate_token( WP_REST_Request $request ) {
-        $auth = $this->get_authorization_header();
-        if ( ! preg_match( '/Bearer\\s(\\S+)/', $auth, $matches ) ) {
-            return new WP_Error( 'missing_token', __( 'Authorization header not found.', 'petia-app-bridge' ), [ 'status' => 401 ] );
-        }
-
-        if ( $this->is_token_revoked( $matches[1] ) ) {
-            return new WP_Error( 'invalid_token', __( 'Token has been revoked.', 'petia-app-bridge' ), [ 'status' => 401 ] );
-        }
-
-        $payload = $this->decode_token( $matches[1] );
-        if ( ! $payload || $payload['exp'] < time() ) {
-            return new WP_Error( 'invalid_token', __( 'Token is invalid or expired.', 'petia-app-bridge' ), [ 'status' => 401 ] );
-        }
-
-        $user = get_userdata( $payload['sub'] );
-        if ( ! $user ) {
-            return new WP_Error( 'invalid_user', __( 'User not found.', 'petia-app-bridge' ), [ 'status' => 401 ] );
-        }
-
-        if ( ! $this->user_has_access( $user->ID ) ) {
-            return new WP_Error( 'access_denied', __( 'User access to API is disabled.', 'petia-app-bridge' ), [ 'status' => 403 ] );
-        }
-
-        return [
-            'user_id'   => $user->ID,
-            'username'  => $user->user_login,
-            'email'     => $user->user_email,
-        ];
-    }
-
-    /**
      * Send password reset email to user.
      */
     public function handle_password_reset_request( WP_REST_Request $request ) {
@@ -386,25 +346,42 @@ class PetIA_App_Bridge {
     }
 
     /**
-     * Retrieve optional user profile fields.
+     * Validate authentication token and return user profile information.
      */
     public function handle_get_profile( WP_REST_Request $request ) {
-        $user_id = get_current_user_id();
-        if ( ! $user_id ) {
+        $auth = $this->get_authorization_header();
+        if ( ! preg_match( '/Bearer\s(\S+)/', $auth, $matches ) ) {
+            return new WP_Error( 'missing_token', __( 'Authorization header not found.', 'petia-app-bridge' ), [ 'status' => 401 ] );
+        }
+
+        if ( $this->is_token_revoked( $matches[1] ) ) {
+            return new WP_Error( 'invalid_token', __( 'Token has been revoked.', 'petia-app-bridge' ), [ 'status' => 401 ] );
+        }
+
+        $payload = $this->decode_token( $matches[1] );
+        if ( ! $payload || $payload['exp'] < time() ) {
+            return new WP_Error( 'invalid_token', __( 'Token is invalid or expired.', 'petia-app-bridge' ), [ 'status' => 401 ] );
+        }
+
+        $user = get_userdata( $payload['sub'] );
+        if ( ! $user ) {
             return new WP_Error( 'invalid_user', __( 'User not found.', 'petia-app-bridge' ), [ 'status' => 401 ] );
         }
 
-        $user = get_userdata( $user_id );
+        if ( ! $this->user_has_access( $user->ID ) ) {
+            return new WP_Error( 'access_denied', __( 'User access to API is disabled.', 'petia-app-bridge' ), [ 'status' => 403 ] );
+        }
 
         return [
-            'username'    => $user->user_login,
-            'email'       => $user->user_email,
-            'first_name'  => get_user_meta( $user_id, 'first_name', true ),
-            'last_name'   => get_user_meta( $user_id, 'last_name', true ),
-            'nickname'    => get_user_meta( $user_id, 'nickname', true ),
-            'description' => get_user_meta( $user_id, 'description', true ),
-            'user_url'    => $user->user_url,
-            'display_name'=> $user->display_name,
+            'user_id'      => $user->ID,
+            'username'     => $user->user_login,
+            'email'        => $user->user_email,
+            'first_name'   => get_user_meta( $user->ID, 'first_name', true ),
+            'last_name'    => get_user_meta( $user->ID, 'last_name', true ),
+            'nickname'     => get_user_meta( $user->ID, 'nickname', true ),
+            'description'  => get_user_meta( $user->ID, 'description', true ),
+            'user_url'     => $user->user_url,
+            'display_name' => $user->display_name,
         ];
     }
 
