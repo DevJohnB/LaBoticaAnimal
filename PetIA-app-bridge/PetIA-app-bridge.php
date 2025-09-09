@@ -94,6 +94,23 @@ class PetIA_App_Bridge {
             'callback'            => [ $this, 'handle_update_order_addresses' ],
             'permission_callback' => '__return_true',
         ] );
+        register_rest_route( 'petia-app-bridge/v1', '/product-categories', [
+            'methods'             => 'GET',
+            'callback'            => [ $this, 'handle_get_product_categories' ],
+            'permission_callback' => '__return_true',
+        ] );
+
+        register_rest_route( 'petia-app-bridge/v1', '/products', [
+            'methods'             => 'GET',
+            'callback'            => [ $this, 'handle_get_products' ],
+            'permission_callback' => '__return_true',
+        ] );
+
+        register_rest_route( 'petia-app-bridge/v1', '/brands', [
+            'methods'             => 'GET',
+            'callback'            => [ $this, 'handle_get_brands' ],
+            'permission_callback' => '__return_true',
+        ] );
     }
 
     /**
@@ -180,10 +197,13 @@ class PetIA_App_Bridge {
         }
 
         $token = $this->generate_token( $user->ID );
+        $wc_keys = $this->get_wc_api_keys( $user->ID );
 
         return [
-            'token'   => $token,
-            'user_id' => $user->ID,
+            'token'          => $token,
+            'user_id'        => $user->ID,
+            'consumer_key'   => $wc_keys['consumer_key'] ?? null,
+            'consumer_secret'=> $wc_keys['consumer_secret'] ?? null,
         ];
     }
 
@@ -435,6 +455,120 @@ class PetIA_App_Bridge {
     }
 
     /**
+     * Retrieve product categories.
+     */
+    public function handle_get_product_categories( WP_REST_Request $request ) {
+        if ( ! get_current_user_id() ) {
+            return new WP_Error( 'rest_forbidden', __( 'Authentication required.', 'petia-app-bridge' ), [ 'status' => 401 ] );
+        }
+
+        if ( ! taxonomy_exists( 'product_cat' ) ) {
+            return new WP_Error( 'woocommerce_missing', __( 'Product categories not available.', 'petia-app-bridge' ), [ 'status' => 500 ] );
+        }
+
+        $terms = get_terms( [
+            'taxonomy'   => 'product_cat',
+            'hide_empty' => false,
+        ] );
+
+        if ( is_wp_error( $terms ) ) {
+            return $terms;
+        }
+
+        $categories = [];
+        foreach ( $terms as $term ) {
+            $thumb_id  = get_term_meta( $term->term_id, 'thumbnail_id', true );
+            $image_url = $thumb_id ? wp_get_attachment_url( $thumb_id ) : '';
+            $categories[] = [
+                'id'          => $term->term_id,
+                'name'        => $term->name,
+                'description' => $term->description,
+                'slug'        => $term->slug,
+                'image'       => $image_url,
+            ];
+        }
+
+        return $categories;
+    }
+
+    /**
+     * Retrieve products.
+     */
+    public function handle_get_products( WP_REST_Request $request ) {
+        if ( ! function_exists( 'wc_get_products' ) ) {
+            return new WP_Error( 'woocommerce_missing', __( 'WooCommerce not available.', 'petia-app-bridge' ), [ 'status' => 500 ] );
+        }
+
+        if ( ! get_current_user_id() ) {
+            return new WP_Error( 'rest_forbidden', __( 'Authentication required.', 'petia-app-bridge' ), [ 'status' => 401 ] );
+        }
+
+        $per_page = absint( $request->get_param( 'per_page' ) );
+        $page     = absint( $request->get_param( 'page' ) );
+
+        $args = [
+            'limit' => $per_page > 0 ? $per_page : -1,
+            'page'  => $page > 0 ? $page : 1,
+        ];
+
+        $products = wc_get_products( $args );
+        $data     = [];
+
+        foreach ( $products as $product ) {
+            $image_id  = $product->get_image_id();
+            $image_url = $image_id ? wp_get_attachment_url( $image_id ) : '';
+            $data[]    = [
+                'id'          => $product->get_id(),
+                'name'        => $product->get_name(),
+                'description' => $product->get_description(),
+                'slug'        => $product->get_slug(),
+                'price'       => $product->get_price(),
+                'image'       => $image_url,
+            ];
+        }
+
+        return $data;
+    }
+
+    /**
+     * Retrieve product brands.
+     */
+    public function handle_get_brands( WP_REST_Request $request ) {
+        if ( ! get_current_user_id() ) {
+            return new WP_Error( 'rest_forbidden', __( 'Authentication required.', 'petia-app-bridge' ), [ 'status' => 401 ] );
+        }
+
+        $taxonomy = taxonomy_exists( 'product_brand' ) ? 'product_brand' : 'product_tag';
+        if ( ! taxonomy_exists( $taxonomy ) ) {
+            return new WP_Error( 'woocommerce_missing', __( 'Product brands not available.', 'petia-app-bridge' ), [ 'status' => 500 ] );
+        }
+
+        $terms = get_terms( [
+            'taxonomy'   => $taxonomy,
+            'hide_empty' => false,
+        ] );
+
+        if ( is_wp_error( $terms ) ) {
+            return $terms;
+        }
+
+        $brands = [];
+        foreach ( $terms as $term ) {
+            $thumb_id  = get_term_meta( $term->term_id, 'thumbnail_id', true );
+            $image_url = $thumb_id ? wp_get_attachment_url( $thumb_id ) : '';
+            $brands[]  = [
+                'id'          => $term->term_id,
+                'name'        => $term->name,
+                'description' => $term->description,
+                'slug'        => $term->slug,
+                'image'       => $image_url,
+            ];
+        }
+
+        return $brands;
+    }
+
+    /**
      * Authenticate request for protected routes.
      */
     public function authenticate_request( $result ) {
@@ -565,6 +699,44 @@ class PetIA_App_Bridge {
      */
     protected function is_token_revoked( $token ) {
         return (bool) get_transient( 'petia_app_bridge_revoked_' . md5( $token ) );
+    }
+
+    /**
+     * Retrieve or generate WooCommerce API keys for a user.
+     */
+    protected function get_wc_api_keys( $user_id ) {
+        if ( ! function_exists( 'wc_rand_hash' ) || ! function_exists( 'wc_api_hash' ) ) {
+            return null;
+        }
+
+        $ck = get_user_meta( $user_id, '_petia_wc_consumer_key', true );
+        $cs = get_user_meta( $user_id, '_petia_wc_consumer_secret', true );
+        if ( $ck && $cs ) {
+            return [ 'consumer_key' => $ck, 'consumer_secret' => $cs ];
+        }
+
+        $consumer_key    = 'ck_' . wc_rand_hash();
+        $consumer_secret = 'cs_' . wc_rand_hash();
+        global $wpdb;
+        $wpdb->insert(
+            $wpdb->prefix . 'woocommerce_api_keys',
+            [
+                'user_id'       => $user_id,
+                'description'   => 'PetIA App Key',
+                'permissions'   => 'read',
+                'consumer_key'  => wc_api_hash( $consumer_key ),
+                'consumer_secret'=> $consumer_secret,
+                'truncated_key' => substr( $consumer_key, -7 ),
+            ],
+            [ '%d', '%s', '%s', '%s', '%s', '%s' ]
+        );
+        update_user_meta( $user_id, '_petia_wc_consumer_key', $consumer_key );
+        update_user_meta( $user_id, '_petia_wc_consumer_secret', $consumer_secret );
+
+        return [
+            'consumer_key'   => $consumer_key,
+            'consumer_secret'=> $consumer_secret,
+        ];
     }
 
     protected function user_has_access( $user_id ) {

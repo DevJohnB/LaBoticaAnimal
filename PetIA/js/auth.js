@@ -1,12 +1,6 @@
-async function loadConfig() {
-  if (!window.appConfig) {
-    window.appConfig = await fetch('config.json').then(r => r.json());
-  }
-  return window.appConfig;
-}
+import config from '../config.js';
 
 async function login(identifier, password) {
-  const config = await loadConfig();
   const url = config.apiBaseUrl + config.endpoints.login;
   const payload = identifier.includes('@')
     ? { email: identifier, password }
@@ -22,10 +16,13 @@ async function login(identifier, password) {
   }
   const data = await res.json();
   localStorage.setItem('token', data.token);
+  if (data.consumer_key && data.consumer_secret) {
+    localStorage.setItem('consumerKey', data.consumer_key);
+    localStorage.setItem('consumerSecret', data.consumer_secret);
+  }
 }
 
 async function requestPasswordReset(email) {
-  const config = await loadConfig();
   const url = config.apiBaseUrl + config.endpoints.passwordResetRequest;
   await fetch(url, {
     method: 'POST',
@@ -34,8 +31,10 @@ async function requestPasswordReset(email) {
   });
 }
 
-function logout() {
+export function logout() {
   localStorage.removeItem('token');
+  localStorage.removeItem('consumerKey');
+  localStorage.removeItem('consumerSecret');
   window.location.href = 'index.html';
 }
 

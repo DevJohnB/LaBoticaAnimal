@@ -1,9 +1,5 @@
-async function loadConfig() {
-  if (!window.appConfig) {
-    window.appConfig = await fetch('config.json').then(r => r.json());
-  }
-  return window.appConfig;
-}
+import config from '../config.js';
+import { logout } from './auth.js';
 
 async function getProfile() {
   const token = localStorage.getItem('token');
@@ -11,8 +7,7 @@ async function getProfile() {
     window.location.href = 'index.html';
     return;
   }
-  const config = await loadConfig();
-  const url = config.apiBaseUrl + config.endpoints.profile.get;
+  const url = config.apiBaseUrl + config.endpoints.profile;
   const res = await fetch(url, {
     headers: { 'Authorization': `Bearer ${token}` }
   });
@@ -20,7 +15,20 @@ async function getProfile() {
     const data = await res.json();
     const container = document.getElementById('userData');
     if (container) {
-      container.innerHTML = `<p><strong>${data.name || ''}</strong></p><p>${data.email || ''}</p>`;
+      const fields = [
+        ['display_name', 'Nombre para mostrar'],
+        ['email', 'Correo electrónico'],
+        ['username', 'Usuario'],
+        ['first_name', 'Nombre'],
+        ['last_name', 'Apellido'],
+        ['nickname', 'Apodo'],
+        ['description', 'Descripción'],
+        ['user_url', 'Sitio web']
+      ];
+      container.innerHTML = fields
+        .filter(([key]) => data[key])
+        .map(([key, label]) => `<p><strong>${label}:</strong> ${data[key]}</p>`)
+        .join('');
     }
   } else {
     logout();
