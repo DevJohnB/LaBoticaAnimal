@@ -5,7 +5,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class PetIA_CORS {
     protected $allow_all = false;
+    private $header_fn;
 
+    public function __construct( ?callable $header_fn = null ) {
+        $this->header_fn = $header_fn ?: 'header';
+    }
     public function add_cors_support() {
         remove_filter( 'rest_pre_serve_request', 'rest_send_cors_headers' );
         add_filter( 'rest_pre_serve_request', function( $value ) {
@@ -43,8 +47,8 @@ class PetIA_CORS {
         $allowed         = defined( 'PETIA_ALLOWED_ORIGINS' ) ? array_map( 'trim', explode( ',', PETIA_ALLOWED_ORIGINS ) ) : [ get_site_url() ];
         $this->allow_all = in_array( '*', $allowed, true );
         return $this->allow_all || in_array( $origin, $allowed, true );
-
     }
+
 
     protected function send_cors_headers( $origin ) {
         if ( defined( 'PETIA_ALLOWED_ORIGINS' ) && '*' === PETIA_ALLOWED_ORIGINS ) {
