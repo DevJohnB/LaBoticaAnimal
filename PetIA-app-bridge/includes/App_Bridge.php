@@ -219,11 +219,39 @@ class App_Bridge {
     }
 
     public function handle_order_addresses_get( \WP_REST_Request $request ) {
-        return new \WP_Error( 'not_implemented', 'Address retrieval not implemented', [ 'status' => 501 ] );
+        if ( ! function_exists( 'wc_get_order' ) ) {
+            return new \WP_Error( 'woocommerce_missing', 'WooCommerce not available', [ 'status' => 501 ] );
+        }
+        $order = wc_get_order( (int) $request['id'] );
+        if ( ! $order ) {
+            return new \WP_Error( 'not_found', 'Order not found', [ 'status' => 404 ] );
+        }
+        return [
+            'billing'  => $order->get_address( 'billing' ),
+            'shipping' => $order->get_address( 'shipping' ),
+        ];
     }
 
     public function handle_order_addresses_post( \WP_REST_Request $request ) {
-        return new \WP_Error( 'not_implemented', 'Address update not implemented', [ 'status' => 501 ] );
+        if ( ! function_exists( 'wc_get_order' ) ) {
+            return new \WP_Error( 'woocommerce_missing', 'WooCommerce not available', [ 'status' => 501 ] );
+        }
+        $order = wc_get_order( (int) $request['id'] );
+        if ( ! $order ) {
+            return new \WP_Error( 'not_found', 'Order not found', [ 'status' => 404 ] );
+        }
+        $params = $request->get_json_params();
+        if ( isset( $params['billing'] ) && is_array( $params['billing'] ) ) {
+            $order->set_address( $params['billing'], 'billing' );
+        }
+        if ( isset( $params['shipping'] ) && is_array( $params['shipping'] ) ) {
+            $order->set_address( $params['shipping'], 'shipping' );
+        }
+        $order->save();
+        return [
+            'billing'  => $order->get_address( 'billing' ),
+            'shipping' => $order->get_address( 'shipping' ),
+        ];
     }
 
     public function handle_product_categories( \WP_REST_Request $request ) {
@@ -259,6 +287,25 @@ class App_Bridge {
     }
 
     public function handle_wc_proxy( \WP_REST_Request $request ) {
-        return new \WP_Error( 'not_implemented', 'Proxy not implemented', [ 'status' => 501 ] );
+        if ( ! class_exists( 'WooCommerce' ) ) {
+            return new \WP_Error( 'woocommerce_missing', 'WooCommerce not available', [ 'status' => 501 ] );
+        }
+        $endpoint = ltrim( $request['endpoint'], '/' );
+        $method   = $request->get_method();
+        $proxy_request = new \WP_REST_Request( $method, '/wc/v3/' . $endpoint );
+        $proxy_request->set_query_params( $request->get_query_params() );
+        foreach ( $request->get_headers() as $name => $values ) {
+            if ( 'host' === strtolower( $name ) ) {
+                continue;
+            }
+            foreach ( (array) $values as $value ) {
+                $proxy_request->set_header( $name, $value );
+            }
+        }
+        if ( in_array( $method, [ 'POST', 'PUT', 'PATCH' ], true ) ) {
+            $proxy_request->set_body( $request->get_body() );
+        }
+        $response = rest_do_request( $proxy_request );
+        return $response;
     }
 }
