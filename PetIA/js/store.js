@@ -1,6 +1,7 @@
 import config from '../config.js';
 import { logout, validateToken } from './auth.js';
 import { apiRequest } from './api.js';
+import { handleError } from './error.js';
 
 async function init() {
   const logoutBtn = document.getElementById('logoutBtn');
@@ -19,7 +20,7 @@ async function loadProducts() {
     const productsData = await apiRequest(config.endpoints.products);
     renderProducts(productsData);
   } catch (err) {
-    console.error(err);
+    handleError(err);
   }
 }
 
@@ -44,7 +45,7 @@ async function loadCategories() {
     const data = await apiRequest(config.endpoints.productCategories);
     renderCategories(data);
   } catch (err) {
-    console.error(err);
+    handleError(err);
   }
 }
 
@@ -69,7 +70,7 @@ async function loadBrands() {
     const data = await apiRequest(config.endpoints.brands);
     renderBrands(data);
   } catch (err) {
-    console.error(err);
+    handleError(err);
   }
 }
 

@@ -66,4 +66,14 @@ describe('apiRequest', () => {
     });
     await expect(apiRequest('/test')).rejects.toThrow('Unauthorized');
   });
+
+  test('throws on non-JSON response', async () => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      headers: { get: () => 'text/plain' },
+      text: async () => 'plain text'
+    });
+    await expect(apiRequest('/test')).rejects.toThrow('Expected JSON response');
+  });
 });

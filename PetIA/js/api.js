@@ -21,8 +21,13 @@ export async function apiRequest(endpoint, options = {}) {
     throw new Error(message || res.statusText);
   }
   const contentType = res.headers.get('content-type') || '';
-  if (contentType.includes('application/json')) {
-    return res.json();
+  if (!contentType.includes('application/json')) {
+    const text = await res.text();
+    throw new Error('Expected JSON response');
   }
-  return res.text();
+  const data = await res.json();
+  if (data && data.error) {
+    throw new Error(data.error);
+  }
+  return data;
 }
