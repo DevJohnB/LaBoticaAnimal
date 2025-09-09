@@ -71,7 +71,7 @@ if (recoverForm) {
     const email = document.getElementById('email').value;
     try {
       await requestPasswordReset(email);
-      alert('Solicitud enviada');
+      console.log('Solicitud enviada');
     } catch (err) {
       handleError(err, 'Error');
     }

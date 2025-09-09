@@ -1,7 +1,8 @@
 <?php
 
-use Firebase\JWT\JWT;
-use Firebase\JWT\Key;
+require_once __DIR__ . '/class-petia-token-manager.php';
+require_once __DIR__ . '/class-petia-admin.php';
+require_once __DIR__ . '/class-petia-cors.php';
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
@@ -9,13 +10,19 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class PetIA_App_Bridge {
 
+    protected $token_manager;
+    protected $cors;
+
     public function __construct() {
+        $this->token_manager = new PetIA_Token_Manager();
+        $this->cors          = new PetIA_CORS();
+
         add_action( 'rest_api_init', [ $this, 'register_routes' ] );
         add_filter( 'rest_authentication_errors', [ $this, 'authenticate_request' ] );
-        add_action( 'rest_api_init', [ $this, 'add_cors_support' ], 15 );
+        add_action( 'rest_api_init', [ $this->cors, 'add_cors_support' ], 15 );
 
         if ( is_admin() ) {
-            add_action( 'admin_menu', [ $this, 'register_admin_page' ] );
+            new PetIA_Admin();
         }
     }
 
@@ -116,63 +123,7 @@ class PetIA_App_Bridge {
         ] );
     }
 
-    /**
-     * Add CORS headers and support preflight requests.
-     */
-    public function add_cors_support() {
-        remove_filter( 'rest_pre_serve_request', 'rest_send_cors_headers' );
-        add_filter( 'rest_pre_serve_request', function( $value ) {
-            $origin = $this->get_request_origin();
-            $allowed = $this->is_origin_allowed( $origin );
-
-            if ( $origin && $allowed ) {
-              $this->send_cors_headers( $origin );
-            }
-
-            if ( 'OPTIONS' === $_SERVER['REQUEST_METHOD'] ) {
-                status_header( $allowed ? 200 : 403 );
-                return true;
-            }
-
-            if ( $origin && ! $allowed ) {
-                status_header( 403 );
-            }
-
-            return $value;
-        }, 10, 3 );
-    }
-
-    /**
-     * Handle browser preflight requests.
-     */
-    protected function get_request_origin() {
-        $origin = '';
-        if ( ! empty( $_SERVER['HTTP_ORIGIN'] ) ) {
-            $origin = trim( $_SERVER['HTTP_ORIGIN'] );
-        } elseif ( ! empty( $_SERVER['HTTP_X_FORWARDED_ORIGIN'] ) ) {
-            $origin = trim( $_SERVER['HTTP_X_FORWARDED_ORIGIN'] );
-        }
-        return $origin;
-    }
-
-    protected function is_origin_allowed( $origin ) {
-        $allowed = defined( 'PETIA_ALLOWED_ORIGINS' ) ? array_map( 'trim', explode( ',', PETIA_ALLOWED_ORIGINS ) ) : [ get_site_url() ];
-        return in_array( $origin, $allowed, true );
-    }
-
-    protected function send_cors_headers( $origin ) {
-        header( "Access-Control-Allow-Origin: {$origin}" );
-        header( 'Access-Control-Allow-Methods: GET, POST, OPTIONS' );
-        header( 'Access-Control-Allow-Headers: Authorization, Content-Type' );
-        header( 'Access-Control-Allow-Credentials: true' );
-    }
-
-    protected function get_secret_key() {
-        if ( ! defined( 'AUTH_KEY' ) || empty( AUTH_KEY ) || 'change_this_secret_key' === AUTH_KEY ) {
-            wp_die( __( 'AUTH_KEY must be defined in wp-config.php.', 'petia-app-bridge' ) );
-        }
-        return AUTH_KEY;
-    }
+    // Token, CORS and admin functionality moved to dedicated classes.
 
     /**
      * Handle user registration.
@@ -255,7 +206,7 @@ class PetIA_App_Bridge {
             return new WP_Error( 'access_denied', __( 'User access to API is disabled.', 'petia-app-bridge' ), [ 'status' => 403 ] );
         }
 
-        $token = $this->generate_token( $user->ID );
+        $token = $this->token_manager->generate_token( $user->ID );
         $wc_keys = $this->get_wc_api_keys( $user->ID );
 
         return [
@@ -270,19 +221,19 @@ class PetIA_App_Bridge {
      * Revoke authentication token.
      */
     public function handle_logout( WP_REST_Request $request ) {
-        $auth = $this->get_authorization_header();
+        $auth = $this->token_manager->get_authorization_header();
         if ( ! preg_match( '/Bearer\\s(\\S+)/', $auth, $matches ) ) {
             return new WP_Error( 'missing_token', __( 'Authorization header not found.', 'petia-app-bridge' ), [ 'status' => 401 ] );
         }
 
         $token   = $matches[1];
-        $payload = $this->decode_token( $token );
+        $payload = $this->token_manager->decode_token( $token );
         if ( ! $payload ) {
             return new WP_Error( 'invalid_token', __( 'Token is invalid.', 'petia-app-bridge' ), [ 'status' => 401 ] );
         }
 
         $ttl = max( 1, $payload['exp'] - time() );
-        set_transient( 'petia_app_bridge_revoked_' . md5( $token ), true, $ttl );
+        $this->token_manager->revoke_token( $token, $ttl );
 
         return [ 'success' => true ];
     }
@@ -344,16 +295,16 @@ class PetIA_App_Bridge {
      * Validate authentication token and return user profile information.
      */
     public function handle_get_profile( WP_REST_Request $request ) {
-        $auth = $this->get_authorization_header();
+        $auth = $this->token_manager->get_authorization_header();
         if ( ! preg_match( '/Bearer\s(\S+)/', $auth, $matches ) ) {
             return new WP_Error( 'missing_token', __( 'Authorization header not found.', 'petia-app-bridge' ), [ 'status' => 401 ] );
         }
 
-        if ( $this->is_token_revoked( $matches[1] ) ) {
+        if ( $this->token_manager->is_token_revoked( $matches[1] ) ) {
             return new WP_Error( 'invalid_token', __( 'Token has been revoked.', 'petia-app-bridge' ), [ 'status' => 401 ] );
         }
 
-        $payload = $this->decode_token( $matches[1] );
+        $payload = $this->token_manager->decode_token( $matches[1] );
         if ( ! $payload || $payload['exp'] < time() ) {
             return new WP_Error( 'invalid_token', __( 'Token is invalid or expired.', 'petia-app-bridge' ), [ 'status' => 401 ] );
         }
@@ -693,17 +644,17 @@ class PetIA_App_Bridge {
             return $result;
         }
 
-        $auth = $this->get_authorization_header();
+        $auth = $this->token_manager->get_authorization_header();
         if ( ! preg_match( '/Bearer\\s(\\S+)/', $auth, $matches ) ) {
             return new WP_Error( 'rest_forbidden', __( 'Authentication required.', 'petia-app-bridge' ), [ 'status' => 401 ] );
         }
 
         $token = $matches[1];
-        if ( $this->is_token_revoked( $token ) ) {
+        if ( $this->token_manager->is_token_revoked( $token ) ) {
             return new WP_Error( 'rest_forbidden', __( 'Token has been revoked.', 'petia-app-bridge' ), [ 'status' => 401 ] );
         }
 
-        $payload = $this->decode_token( $token );
+        $payload = $this->token_manager->decode_token( $token );
         if ( ! $payload || $payload['exp'] < time() ) {
             return new WP_Error( 'rest_forbidden', __( 'Token is invalid or expired.', 'petia-app-bridge' ), [ 'status' => 401 ] );
         }
@@ -715,54 +666,6 @@ class PetIA_App_Bridge {
         }
 
         return $result;
-    }
-
-    /**
-     * Generate a simple JWT-like token.
-     */
-    protected function generate_token( $user_id ) {
-        $payload = [
-            'sub' => $user_id,
-            'iat' => time(),
-            'exp' => time() + DAY_IN_SECONDS,
-        ];
-        return JWT::encode( $payload, $this->get_secret_key(), 'HS256' );
-    }
-
-    /**
-     * Decode and verify token.
-     */
-    protected function decode_token( $token ) {
-        try {
-            return (array) JWT::decode( $token, new Key( $this->get_secret_key(), 'HS256' ) );
-        } catch ( \Exception $e ) {
-            return false;
-        }
-    }
-
-    /**
-     * Retrieve Authorization header.
-     */
-    protected function get_authorization_header() {
-        if ( isset( $_SERVER['HTTP_AUTHORIZATION'] ) ) {
-            return sanitize_text_field( wp_unslash( $_SERVER['HTTP_AUTHORIZATION'] ) );
-        }
-
-        if ( function_exists( 'apache_request_headers' ) ) {
-            $headers = apache_request_headers();
-            if ( isset( $headers['Authorization'] ) ) {
-                return sanitize_text_field( $headers['Authorization'] );
-            }
-        }
-
-        return '';
-    }
-
-    /**
-     * Check if token has been revoked.
-     */
-    protected function is_token_revoked( $token ) {
-        return (bool) get_transient( 'petia_app_bridge_revoked_' . md5( $token ) );
     }
 
     /**
@@ -814,81 +717,6 @@ class PetIA_App_Bridge {
             return false;
         }
         return strtotime( $row->end_date ) > current_time( 'timestamp' );
-    }
-
-    public function register_admin_page() {
-        add_menu_page(
-            __( 'PetIA App Bridge', 'petia-app-bridge' ),
-            __( 'PetIA Bridge', 'petia-app-bridge' ),
-            'manage_options',
-            'petia-app-bridge',
-            [ $this, 'render_admin_page' ]
-        );
-    }
-
-    public function render_admin_page() {
-        $tab = isset( $_GET['tab'] ) ? sanitize_key( $_GET['tab'] ) : 'access';
-        $base_url = menu_page_url( 'petia-app-bridge', false );
-
-        echo '<div class="wrap">';
-        echo '<h1>' . esc_html__( 'PetIA App Bridge', 'petia-app-bridge' ) . '</h1>';
-        echo '<h2 class="nav-tab-wrapper">';
-        echo '<a href="' . esc_url( add_query_arg( 'tab', 'access', $base_url ) ) . '" class="nav-tab ' . ( 'tests' !== $tab ? 'nav-tab-active' : '' ) . '">' . esc_html__( 'Access Control', 'petia-app-bridge' ) . '</a>';
-        echo '<a href="' . esc_url( add_query_arg( 'tab', 'tests', $base_url ) ) . '" class="nav-tab ' . ( 'tests' === $tab ? 'nav-tab-active' : '' ) . '">' . esc_html__( 'Run Tests', 'petia-app-bridge' ) . '</a>';
-        echo '</h2>';
-
-        if ( 'tests' === $tab ) {
-            $this->render_tests_tab();
-        } else {
-            $this->render_access_tab();
-        }
-        echo '</div>';
-    }
-
-    private function render_access_tab() {
-        if ( isset( $_POST['petia_access_nonce'] ) && wp_verify_nonce( $_POST['petia_access_nonce'], 'petia_save_access' ) ) {
-            $users = get_users( [ 'fields' => [ 'ID' ] ] );
-            global $wpdb;
-            $table = $wpdb->prefix . 'petia_app_bridge_access';
-            foreach ( $users as $user ) {
-                $allowed    = isset( $_POST['access'][ $user->ID ] ) ? 1 : 0;
-                $start_date = isset( $_POST['start_date'][ $user->ID ] ) && $_POST['start_date'][ $user->ID ] !== '' ? sanitize_text_field( $_POST['start_date'][ $user->ID ] ) . ' 00:00:00' : current_time( 'mysql' );
-                $end_date   = isset( $_POST['end_date'][ $user->ID ] ) && $_POST['end_date'][ $user->ID ] !== '' ? sanitize_text_field( $_POST['end_date'][ $user->ID ] ) . ' 23:59:59' : '9999-12-31 23:59:59';
-                $wpdb->replace(
-                    $table,
-                    [
-                        'user_id'    => $user->ID,
-                        'allowed'    => $allowed,
-                        'start_date' => $start_date,
-                        'end_date'   => $end_date,
-                    ],
-                    [ '%d', '%d', '%s', '%s' ]
-                );
-            }
-            echo '<div class="updated"><p>' . esc_html__( 'Settings saved.', 'petia-app-bridge' ) . '</p></div>';
-        }
-
-        $users = get_users();
-        global $wpdb;
-        $table = $wpdb->prefix . 'petia_app_bridge_access';
-
-        echo '<form method="post">';
-        wp_nonce_field( 'petia_save_access', 'petia_access_nonce' );
-        echo '<table class="widefat"><thead><tr><th>' . esc_html__( 'User', 'petia-app-bridge' ) . '</th><th>' . esc_html__( 'Allowed', 'petia-app-bridge' ) . '</th><th>' . esc_html__( 'Start Date', 'petia-app-bridge' ) . '</th><th>' . esc_html__( 'End Date', 'petia-app-bridge' ) . '</th></tr></thead><tbody>';
-        foreach ( $users as $user ) {
-            $row     = $wpdb->get_row( $wpdb->prepare( "SELECT allowed, start_date, end_date FROM $table WHERE user_id = %d", $user->ID ) );
-            $allowed = $row ? $row->allowed : null;
-            $checked = ( null === $allowed || $allowed ) ? 'checked' : '';
-            $start_v = $row ? substr( $row->start_date, 0, 10 ) : '';
-            $end_v   = $row ? substr( $row->end_date, 0, 10 ) : '9999-12-31';
-            echo '<tr><td>' . esc_html( $user->user_login ) . '</td><td><input type="checkbox" name="access[' . intval( $user->ID ) . ']" value="1" ' . $checked . '></td><td><input type="date" name="start_date[' . intval( $user->ID ) . ']" value="' . esc_attr( $start_v ) . '"></td><td><input type="date" name="end_date[' . intval( $user->ID ) . ']" value="' . esc_attr( $end_v ) . '"></td></tr>';
-        }
-        echo '</tbody></table><p><input type="submit" class="button-primary" value="' . esc_attr__( 'Save Changes', 'petia-app-bridge' ) . '"></p></form>';
-    }
-
-    private function render_tests_tab() {
-        echo '<p>' . esc_html__( 'Running tests from the admin panel is disabled for security reasons.', 'petia-app-bridge' ) . '</p>';
-        echo '<p><code>npm test</code></p>';
     }
 }
 

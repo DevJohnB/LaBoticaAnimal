@@ -73,7 +73,7 @@ async function updateProfile(e) {
   });
 
   if (res.ok) {
-    alert('Datos actualizados');
+    console.log('Datos actualizados');
     getProfile();
   } else {
     handleError(new Error('Error al actualizar'));
