@@ -113,6 +113,12 @@ class PetIA_App_Bridge {
             'callback'            => [ $this, 'handle_get_brands' ],
             'permission_callback' => '__return_true',
         ] );
+
+        register_rest_route( 'petia-app-bridge/v1', '/wc/(?P<endpoint>[\w\-\/]+)', [
+            'methods'             => [ 'GET', 'POST', 'PUT', 'DELETE' ],
+            'callback'            => [ $this, 'handle_wc_proxy' ],
+            'permission_callback' => '__return_true',
+        ] );
     }
 
     /**
@@ -121,7 +127,13 @@ class PetIA_App_Bridge {
     public function add_cors_support() {
         remove_filter( 'rest_pre_serve_request', 'rest_send_cors_headers' );
         add_filter( 'rest_pre_serve_request', function( $value ) {
-            $origin       = isset( $_SERVER['HTTP_ORIGIN'] ) ? trim( $_SERVER['HTTP_ORIGIN'] ) : '';
+            $origin = '';
+            if ( ! empty( $_SERVER['HTTP_ORIGIN'] ) ) {
+                $origin = trim( $_SERVER['HTTP_ORIGIN'] );
+            } elseif ( ! empty( $_SERVER['HTTP_X_FORWARDED_ORIGIN'] ) ) {
+                $origin = trim( $_SERVER['HTTP_X_FORWARDED_ORIGIN'] );
+            }
+
             $origin_valid = $origin && 'null' !== $origin;
 
             if ( $origin_valid ) {
@@ -149,7 +161,17 @@ class PetIA_App_Bridge {
      */
     public function maybe_handle_preflight() {
         if ( isset( $_SERVER['REQUEST_METHOD'] ) && 'OPTIONS' === $_SERVER['REQUEST_METHOD'] ) {
-            $origin       = isset( $_SERVER['HTTP_ORIGIN'] ) ? trim( $_SERVER['HTTP_ORIGIN'] ) : '';
+            error_log( 'maybe_handle_preflight triggered' );
+            error_log( 'HTTP_ORIGIN: ' . ( $_SERVER['HTTP_ORIGIN'] ?? 'not set' ) );
+            error_log( 'HTTP_X_FORWARDED_ORIGIN: ' . ( $_SERVER['HTTP_X_FORWARDED_ORIGIN'] ?? 'not set' ) );
+
+            $origin = '';
+            if ( ! empty( $_SERVER['HTTP_ORIGIN'] ) ) {
+                $origin = trim( $_SERVER['HTTP_ORIGIN'] );
+            } elseif ( ! empty( $_SERVER['HTTP_X_FORWARDED_ORIGIN'] ) ) {
+                $origin = trim( $_SERVER['HTTP_X_FORWARDED_ORIGIN'] );
+            }
+
             $origin_valid = $origin && 'null' !== $origin;
 
             if ( $origin_valid ) {
@@ -620,6 +642,55 @@ class PetIA_App_Bridge {
         }
 
         return $brands;
+    }
+
+    /**
+     * Proxy WooCommerce REST API requests through the bridge.
+     *
+     * Centralizes server logic so the mobile app can remain a thin client.
+     * Applies basic sanitization and caching for security and performance.
+     */
+    public function handle_wc_proxy( WP_REST_Request $request ) {
+        if ( ! get_current_user_id() ) {
+            return new WP_Error( 'rest_forbidden', __( 'Authentication required.', 'petia-app-bridge' ), [ 'status' => 401 ] );
+        }
+
+        $endpoint = sanitize_text_field( $request['endpoint'] );
+        $endpoint = preg_replace( '#[^a-zA-Z0-9_\/-]#', '', $endpoint );
+
+        $method = $request->get_method();
+        if ( 'GET' !== $method ) {
+            return new WP_Error( 'rest_forbidden', __( 'Only GET requests are supported.', 'petia-app-bridge' ), [ 'status' => 403 ] );
+        }
+
+        $user_id   = get_current_user_id();
+        $cache_key = 'petia_wc_' . md5( $user_id . '|' . $endpoint );
+        $cached    = get_transient( $cache_key );
+        if ( $cached ) {
+            return rest_ensure_response( $cached );
+        }
+
+        $keys = $this->get_wc_api_keys( $user_id );
+        if ( ! $keys ) {
+            return new WP_Error( 'no_keys', __( 'Missing API keys.', 'petia-app-bridge' ), [ 'status' => 500 ] );
+        }
+
+        $url      = rest_url( 'wc/v3/' . ltrim( $endpoint, '/' ) );
+        $response = wp_remote_get( $url, [
+            'headers' => [
+                'Authorization' => 'Basic ' . base64_encode( $keys['consumer_key'] . ':' . $keys['consumer_secret'] ),
+            ],
+            'timeout' => 10,
+        ] );
+
+        if ( is_wp_error( $response ) ) {
+            return $response;
+        }
+
+        $body = json_decode( wp_remote_retrieve_body( $response ), true );
+        set_transient( $cache_key, $body, 300 );
+
+        return rest_ensure_response( $body );
     }
 
     /**
