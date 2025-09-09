@@ -124,8 +124,12 @@ class App_Bridge {
     }
 
     public function handle_register( \WP_REST_Request $request ) {
-        $params = $request->get_json_params();
-        $user = wp_create_user( $params['username'], $params['password'], $params['email'] );
+        $params   = $request->get_json_params();
+        $username = sanitize_user( $params['username'] ?? '' );
+        $password = sanitize_text_field( $params['password'] ?? '' );
+        $email    = sanitize_email( $params['email'] ?? '' );
+
+        $user = wp_create_user( $username, $password, $email );
         if ( is_wp_error( $user ) ) {
             return $user;
         }
@@ -208,13 +212,26 @@ class App_Bridge {
 
     public function handle_profile_post( \WP_REST_Request $request ) {
         $user_id = get_current_user_id();
-        $params  = $request->get_json_params();
-        wp_update_user( [
+        if ( ! $user_id || ! current_user_can( 'edit_user', $user_id ) ) {
+            return new \WP_Error( 'rest_forbidden', 'Cannot update user.', [ 'status' => rest_authorization_required_code() ] );
+        }
+
+        $params     = $request->get_json_params();
+        $first_name = sanitize_text_field( $params['first_name'] ?? '' );
+        $last_name  = sanitize_text_field( $params['last_name'] ?? '' );
+        $email      = sanitize_email( $params['email'] ?? '' );
+
+        $result = wp_update_user( [
             'ID'         => $user_id,
-            'first_name' => $params['first_name'] ?? '',
-            'last_name'  => $params['last_name'] ?? '',
-            'user_email' => $params['email'] ?? '',
+            'first_name' => $first_name,
+            'last_name'  => $last_name,
+            'user_email' => $email,
         ] );
+
+        if ( is_wp_error( $result ) ) {
+            return $result;
+        }
+
         return [ 'success' => true ];
     }
 
