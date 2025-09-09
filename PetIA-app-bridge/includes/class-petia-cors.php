@@ -10,7 +10,6 @@ class PetIA_CORS {
     public function __construct( ?callable $header_fn = null ) {
         $this->header_fn = $header_fn ?: 'header';
     }
-
     public function add_cors_support() {
         remove_filter( 'rest_pre_serve_request', 'rest_send_cors_headers' );
         add_filter( 'rest_pre_serve_request', function( $value ) {
@@ -50,14 +49,17 @@ class PetIA_CORS {
         return $this->allow_all || in_array( $origin, $allowed, true );
     }
 
+
     protected function send_cors_headers( $origin ) {
-        $h = $this->header_fn;
-        $h( "Access-Control-Allow-Origin: {$origin}" );
-        if ( $this->allow_all ) {
-            $h( 'Vary: Origin' );
+        if ( defined( 'PETIA_ALLOWED_ORIGINS' ) && '*' === PETIA_ALLOWED_ORIGINS ) {
+            $origin = '*';
         }
-        $h( 'Access-Control-Allow-Methods: GET, POST, OPTIONS' );
-        $h( 'Access-Control-Allow-Headers: Authorization, Content-Type' );
-        $h( 'Access-Control-Allow-Credentials: true' );
+        header( "Access-Control-Allow-Origin: {$origin}" );
+        if ( $this->allow_all ) {
+            header( 'Vary: Origin' );
+        }
+        header( 'Access-Control-Allow-Methods: GET, POST, OPTIONS' );
+        header( 'Access-Control-Allow-Headers: Authorization, Content-Type' );
+        header( 'Access-Control-Allow-Credentials: true' );
     }
 }
