@@ -42,6 +42,24 @@ class App_Bridge {
             if ( $this->token_manager->is_token_revoked( $decoded->jti ) ) {
                 return new \WP_Error( 'token_revoked', 'Token revoked', [ 'status' => 401 ] );
             }
+            global $wpdb;
+            $table   = $wpdb->prefix . 'petia_app_bridge_access';
+            $access  = $wpdb->get_row(
+                $wpdb->prepare(
+                    "SELECT allowed, start_date, end_date FROM $table WHERE user_id = %d",
+                    $decoded->data->user_id
+                )
+            );
+            $now = current_time( 'timestamp' );
+            if (
+                empty( $access ) ||
+                (int) $access->allowed !== 1 ||
+                ( $access->start_date && $now < strtotime( $access->start_date ) ) ||
+                ( $access->end_date && $now > strtotime( $access->end_date ) )
+            ) {
+                return new \WP_Error( 'forbidden', 'User not allowed', [ 'status' => 403 ] );
+            }
+
             wp_set_current_user( $decoded->data->user_id );
             return $result;
         } catch ( \Exception $e ) {
