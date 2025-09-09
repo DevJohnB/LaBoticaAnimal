@@ -1,7 +1,13 @@
 import config from '../config.js';
-import { getToken, clearToken, fetchWithAuth } from './token.js';
+import { getToken, clearToken, fetchWithAuth, isTokenExpired } from './token.js';
 
 export async function apiRequest(endpoint, options = {}) {
+  const token = getToken();
+  if (token && isTokenExpired(token)) {
+    clearToken();
+    window.location.href = 'index.html';
+    throw new Error('Token expired');
+  }
   let url = endpoint;
   if (!/^https?:/i.test(endpoint)) {
     url = config.apiBaseUrl.replace(/\/$/, '') + endpoint;

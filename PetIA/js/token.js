@@ -32,5 +32,6 @@ export async function fetchWithAuth(input, options = {}) {
   if (token) {
     headers.set('Authorization', `Bearer ${token}`);
   }
-  return fetch(input, { ...options, headers, credentials: 'include' });
+  // Consumers can supply `credentials` in options when cookies are needed
+  return fetch(input, { ...options, headers });
 }
