@@ -1,4 +1,6 @@
-import { parseToken, isTokenExpired, setToken, getToken, clearToken } from '../PetIA/js/token.js';
+import { jest } from '@jest/globals';
+import 'whatwg-fetch';
+import { parseToken, isTokenExpired, setToken, getToken, clearToken, fetchWithAuth } from '../PetIA/js/token.js';
 
 describe('token utils', () => {
   test('parses token payload', () => {
@@ -21,5 +23,22 @@ describe('token utils', () => {
     clearToken();
     expect(getToken()).toBe('');
     expect(sessionStorage.getItem('token')).toBeNull();
+  });
+});
+
+describe('fetchWithAuth', () => {
+  beforeEach(() => {
+    clearToken();
+    global.fetch = jest.fn().mockResolvedValue({ ok: true });
+  });
+
+  test('does not set credentials by default', async () => {
+    await fetchWithAuth('/test');
+    expect(global.fetch.mock.calls[0][1].credentials).toBeUndefined();
+  });
+
+  test('respects credentials option when provided', async () => {
+    await fetchWithAuth('/test', { credentials: 'include' });
+    expect(global.fetch.mock.calls[0][1].credentials).toBe('include');
   });
 });
