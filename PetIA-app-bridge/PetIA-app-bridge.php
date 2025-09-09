@@ -864,29 +864,30 @@ class PetIA_App_Bridge {
             __( 'PetIA Bridge', 'petia-app-bridge' ),
             'manage_options',
             'petia-app-bridge',
-            [ $this, 'render_access_page' ]
-        );
-
-        add_submenu_page(
-            'petia-app-bridge',
-            __( 'Access Control', 'petia-app-bridge' ),
-            __( 'Access Control', 'petia-app-bridge' ),
-            'manage_options',
-            'petia-app-bridge',
-            [ $this, 'render_access_page' ]
-        );
-
-        add_submenu_page(
-            'petia-app-bridge',
-            __( 'Run Tests', 'petia-app-bridge' ),
-            __( 'Run Tests', 'petia-app-bridge' ),
-            'manage_options',
-            'petia-app-bridge-tests',
-            [ $this, 'render_tests_page' ]
+            [ $this, 'render_admin_page' ]
         );
     }
 
-    public function render_access_page() {
+    public function render_admin_page() {
+        $tab = isset( $_GET['tab'] ) ? sanitize_key( $_GET['tab'] ) : 'access';
+        $base_url = menu_page_url( 'petia-app-bridge', false );
+
+        echo '<div class="wrap">';
+        echo '<h1>' . esc_html__( 'PetIA App Bridge', 'petia-app-bridge' ) . '</h1>';
+        echo '<h2 class="nav-tab-wrapper">';
+        echo '<a href="' . esc_url( add_query_arg( 'tab', 'access', $base_url ) ) . '" class="nav-tab ' . ( 'tests' !== $tab ? 'nav-tab-active' : '' ) . '">' . esc_html__( 'Access Control', 'petia-app-bridge' ) . '</a>';
+        echo '<a href="' . esc_url( add_query_arg( 'tab', 'tests', $base_url ) ) . '" class="nav-tab ' . ( 'tests' === $tab ? 'nav-tab-active' : '' ) . '">' . esc_html__( 'Run Tests', 'petia-app-bridge' ) . '</a>';
+        echo '</h2>';
+
+        if ( 'tests' === $tab ) {
+            $this->render_tests_tab();
+        } else {
+            $this->render_access_tab();
+        }
+        echo '</div>';
+    }
+
+    private function render_access_tab() {
         if ( isset( $_POST['petia_access_nonce'] ) && wp_verify_nonce( $_POST['petia_access_nonce'], 'petia_save_access' ) ) {
             $users = get_users( [ 'fields' => [ 'ID' ] ] );
             global $wpdb;
@@ -913,7 +914,6 @@ class PetIA_App_Bridge {
         global $wpdb;
         $table = $wpdb->prefix . 'petia_app_bridge_access';
 
-        echo '<div class="wrap"><h1>' . esc_html__( 'PetIA App Bridge Access', 'petia-app-bridge' ) . '</h1>';
         echo '<form method="post">';
         wp_nonce_field( 'petia_save_access', 'petia_access_nonce' );
         echo '<table class="widefat"><thead><tr><th>' . esc_html__( 'User', 'petia-app-bridge' ) . '</th><th>' . esc_html__( 'Allowed', 'petia-app-bridge' ) . '</th><th>' . esc_html__( 'Start Date', 'petia-app-bridge' ) . '</th><th>' . esc_html__( 'End Date', 'petia-app-bridge' ) . '</th></tr></thead><tbody>';
@@ -925,12 +925,10 @@ class PetIA_App_Bridge {
             $end_v   = $row ? substr( $row->end_date, 0, 10 ) : '9999-12-31';
             echo '<tr><td>' . esc_html( $user->user_login ) . '</td><td><input type="checkbox" name="access[' . intval( $user->ID ) . ']" value="1" ' . $checked . '></td><td><input type="date" name="start_date[' . intval( $user->ID ) . ']" value="' . esc_attr( $start_v ) . '"></td><td><input type="date" name="end_date[' . intval( $user->ID ) . ']" value="' . esc_attr( $end_v ) . '"></td></tr>';
         }
-        echo '</tbody></table><p><input type="submit" class="button-primary" value="' . esc_attr__( 'Save Changes', 'petia-app-bridge' ) . '"></p></form></div>';
+        echo '</tbody></table><p><input type="submit" class="button-primary" value="' . esc_attr__( 'Save Changes', 'petia-app-bridge' ) . '"></p></form>';
     }
 
-    public function render_tests_page() {
-        echo '<div class="wrap"><h1>' . esc_html__( 'PetIA App Bridge Tests', 'petia-app-bridge' ) . '</h1>';
-
+    private function render_tests_tab() {
         if ( isset( $_POST['petia_tests_nonce'] ) && wp_verify_nonce( $_POST['petia_tests_nonce'], 'petia_run_tests' ) ) {
             $root    = dirname( plugin_dir_path( __FILE__ ) );
             $command = 'cd ' . escapeshellarg( $root ) . ' && npm test 2>&1';
@@ -946,7 +944,7 @@ class PetIA_App_Bridge {
         echo '<form method="post">';
         wp_nonce_field( 'petia_run_tests', 'petia_tests_nonce' );
         submit_button( __( 'Run Tests', 'petia-app-bridge' ) );
-        echo '</form></div>';
+        echo '</form>';
     }
 }
 

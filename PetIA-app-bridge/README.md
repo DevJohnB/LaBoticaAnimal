@@ -7,7 +7,7 @@ Plugin de WordPress que expone endpoints REST para que aplicaciones externas use
 - Gestión de perfil, recuperación de contraseña y direcciones de pedidos.
 - Catálogo de categorías, productos y marcas.
 - Control de acceso por usuario con fechas de vigencia.
-- Menú de administración **PetIA Bridge** con páginas de acceso y ejecución de pruebas.
+- Menú de administración **PetIA Bridge** con pestañas de acceso y ejecución de pruebas.
 - Soporte CORS configurable mediante la constante `PETIA_ALLOWED_ORIGINS`.
 
 ## Requisitos
@@ -20,8 +20,8 @@ Plugin de WordPress que expone endpoints REST para que aplicaciones externas use
 1. Copia `PetIA-app-bridge` a `wp-content/plugins/`.
 2. Activa el plugin en el panel de WordPress.
 3. Configura `PETIA_ALLOWED_ORIGINS` con una lista separada por comas de dominios permitidos.
-4. Gestiona las fechas de acceso en **Usuarios → PetIA App Bridge Access**.
-5. (Opcional) Ejecuta las pruebas desde **PetIA Bridge → Run Tests**.
+4. Gestiona las fechas de acceso desde **PetIA Bridge** en la pestaña *Access Control*.
+5. (Opcional) Ejecuta las pruebas desde la pestaña *Run Tests* del mismo menú.
 
 ## Endpoints
 ### Autenticación
@@ -50,7 +50,7 @@ Plugin de WordPress que expone endpoints REST para que aplicaciones externas use
 Todos los endpoints, salvo **register**, **login**, **password-reset-request** y **password-reset**, requieren el encabezado `Authorization: Bearer <token>`.
 
 ## Control de acceso
-Al activarse se crea la tabla `wp_petia_app_bridge_access` con los campos `allowed`, `start_date` y `end_date`. Desde **Usuarios → PetIA App Bridge Access** se administra la vigencia del acceso de cada usuario.
+Al activarse se crea la tabla `wp_petia_app_bridge_access` con los campos `allowed`, `start_date` y `end_date`. Desde la pestaña *Access Control* del menú **PetIA Bridge** se administra la vigencia del acceso de cada usuario.
 
 ## Seguridad
 - El token se firma con `AUTH_KEY`, por lo que debe ser único y secreto.
