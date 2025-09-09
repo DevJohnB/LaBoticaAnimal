@@ -16,6 +16,7 @@ class PetIA_App_Bridge {
     public function __construct() {
         add_action( 'rest_api_init', [ $this, 'register_routes' ] );
         add_filter( 'rest_authentication_errors', [ $this, 'authenticate_request' ] );
+        add_action( 'rest_api_init', [ $this, 'add_cors_support' ], 15 );
 
         if ( is_admin() ) {
             add_action( 'admin_menu', [ $this, 'register_admin_page' ] );
@@ -111,6 +112,20 @@ class PetIA_App_Bridge {
             'callback'            => [ $this, 'handle_get_brands' ],
             'permission_callback' => '__return_true',
         ] );
+    }
+
+    /**
+     * Add CORS headers and support preflight requests.
+     */
+    public function add_cors_support() {
+        remove_filter( 'rest_pre_serve_request', 'rest_send_cors_headers' );
+        add_filter( 'rest_pre_serve_request', function( $value ) {
+            header( 'Access-Control-Allow-Origin: *' );
+            header( 'Access-Control-Allow-Methods: GET, POST, OPTIONS' );
+            header( 'Access-Control-Allow-Headers: Authorization, Content-Type' );
+            header( 'Access-Control-Allow-Credentials: true' );
+            return $value;
+        } );
     }
 
     /**
@@ -494,8 +509,7 @@ class PetIA_App_Bridge {
     /**
      * Retrieve products.
      */
-
-public function handle_get_products( WP_REST_Request $request ) {
+    public function handle_get_products( WP_REST_Request $request ) {
 
         if ( ! function_exists( 'wc_get_products' ) ) {
             return new WP_Error( 'woocommerce_missing', __( 'WooCommerce not available.', 'petia-app-bridge' ), [ 'status' => 500 ] );
@@ -575,6 +589,10 @@ public function handle_get_products( WP_REST_Request $request ) {
      */
     public function authenticate_request( $result ) {
         if ( ! empty( $result ) ) {
+            return $result;
+        }
+
+        if ( 'OPTIONS' === $_SERVER['REQUEST_METHOD'] ) {
             return $result;
         }
 

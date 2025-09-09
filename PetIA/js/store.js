@@ -11,7 +11,6 @@ function init() {
 
 document.getElementById('logoutBtn').addEventListener('click', logout);
 
-
 async function loadProducts() {
   const { products } = config.woocommerce;
   const consumerKey = localStorage.getItem('consumerKey');
