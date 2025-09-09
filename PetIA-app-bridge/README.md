@@ -14,3 +14,5 @@ Plugin de WordPress que expone endpoints REST para ser consumidos por la aplicac
 2. Asegúrate de definir `AUTH_KEY` en `wp-config.php`.
 3. (Opcional) Define `PETIA_ALLOWED_ORIGINS` para restringir los orígenes permitidos.
 4. Activa el plugin desde el panel de WordPress.
+
+Las dependencias PHP necesarias ya están incluidas, por lo que no es necesario ejecutar `composer install`.

@@ -12,13 +12,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 if ( file_exists( __DIR__ . '/vendor/autoload.php' ) ) {
     require_once __DIR__ . '/vendor/autoload.php';
+} else {
+    error_log( 'PetIA App Bridge: missing vendor/autoload.php.' );
+    return;
 }
 
 define( 'PETIA_ABSPATH', plugin_dir_path( __FILE__ ) );
-
-require_once PETIA_ABSPATH . 'includes/class-petia-token-manager.php';
-require_once PETIA_ABSPATH . 'includes/class-petia-admin.php';
-require_once PETIA_ABSPATH . 'includes/class-petia-app-bridge.php';
+require_once PETIA_ABSPATH . 'autoload.php';
 
 function petia_app_bridge_init() {
     new PetIA_App_Bridge();
