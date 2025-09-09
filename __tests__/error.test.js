@@ -1,17 +1,25 @@
 import { jest } from '@jest/globals';
+import { apiRequest } from '../PetIA/js/api.js';
+import { parseToken, setToken, clearToken } from '../PetIA/js/token.js';
+import 'whatwg-fetch';
 
-describe('handleError', () => {
-  it('logs and alerts the user message', async () => {
-    const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-    const alertMock = jest.fn();
-    global.window = { alert: alertMock };
-    global.alert = alertMock;
-    const { handleError } = await import('../PetIA/js/error.js');
-    handleError(new Error('fail'), 'Oops');
-    expect(consoleSpy).toHaveBeenCalled();
-    expect(alertMock).toHaveBeenCalledWith('Oops');
-    consoleSpy.mockRestore();
-    delete global.window;
-    delete global.alert;
+describe('error handling', () => {
+  beforeEach(() => {
+    clearToken();
+    global.fetch = jest.fn();
+  });
+
+  test('parseToken returns null on invalid token', () => {
+    expect(parseToken('invalid')).toBeNull();
+  });
+
+  test('apiRequest throws when body contains error', async () => {
+    setToken('abc');
+    global.fetch.mockResolvedValue({
+      status: 200,
+      headers: new Headers({ 'content-type': 'application/json' }),
+      json: async () => ({ error: 'fail' }),
+    });
+    await expect(apiRequest('/test')).rejects.toThrow('fail');
   });
 });

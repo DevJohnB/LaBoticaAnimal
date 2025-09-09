@@ -1,24 +1,19 @@
-# La Botica Animal
+# PetIA Bridge Repository
 
-Repositorio que combina la aplicación web **PetIA** y el plugin de WordPress **PetIA App Bridge**.
+Este repositorio contiene el plugin de WordPress **PetIA App Bridge** y la aplicación web estática **PetIA**.
 
-## Carpetas
-- `PetIA-app-bridge`: plugin que expone una API REST para registrar usuarios, autenticarlos y acceder a información de WooCommerce.
-- `PetIA`: aplicación estática que consume la API del plugin para mostrar productos y gestionar cuentas.
-- `__tests__`: pruebas unitarias para los módulos JavaScript compartidos.
+## Plugin
+1. Copia `PetIA-app-bridge/` en `wp-content/plugins/`.
+2. Define `AUTH_KEY` en `wp-config.php` y, opcionalmente, `PETIA_ALLOWED_ORIGINS`.
+3. Activa el plugin desde el panel de WordPress.
 
-## Requisitos
-- Node.js 18 o superior para ejecutar las pruebas.
-- Una instalación de WordPress (con WooCommerce) para usar el plugin.
-
-## Configuración rápida
-1. **Plugin**: copia `PetIA-app-bridge` en `wp-content/plugins/`, actívalo y define `AUTH_KEY`. Consulta el [README del plugin](PetIA-app-bridge/README.md).
-2. **Aplicación**: sirve el contenido de `PetIA/` en un servidor estático y ajusta `apiBaseUrl` en `PetIA/config.js`. Más detalles en el [README de la app](PetIA/README.md).
+## Aplicación
+1. Sirve la carpeta `PetIA/` en cualquier servidor estático.
+2. Ajusta `API_BASE_URL` si la API está en otra URL (ver `PetIA/config.js`).
 
 ## Pruebas
-Instala dependencias y ejecuta los tests de JavaScript:
-
+Instala dependencias y ejecuta las pruebas:
 ```bash
-npm ci
+npm install
 npm test
 ```

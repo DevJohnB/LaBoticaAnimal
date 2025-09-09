@@ -1,25 +1,33 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PetIA - Login</title>
-  <link rel="stylesheet" href="css/style.css">
-  <link rel="stylesheet" href="css/responsive.css">
-  <script defer src="js/i18n.js"></script>
-  <script type="module" src="js/auth.js"></script>
+  <meta charset="UTF-8" />
+  <title>PetIA Login</title>
 </head>
-<body class="bg-light">
-  <main class="content">
-    <h1 data-i18n="login_title">Iniciar sesión</h1>
-    <form id="loginForm">
-      <label for="email" data-i18n="email">Correo electrónico</label>
-      <input type="email" id="email" required>
-      <label for="password" data-i18n="password">Contraseña</label>
-      <input type="password" id="password" required>
-      <button type="submit" class="btn-primary" data-i18n="login">Entrar</button>
-    </form>
-    <p><a href="recover.html" data-i18n="forgot_password">¿Olvidaste tu contraseña?</a></p>
-  </main>
+<body>
+  <h1>Login</h1>
+  <form id="loginForm">
+    <input type="text" id="username" placeholder="Username" />
+    <input type="password" id="password" placeholder="Password" />
+    <button type="submit">Login</button>
+  </form>
+  <script type="module">
+    import config from './config.js';
+    import { setToken } from './js/token.js';
+    const form = document.getElementById('loginForm');
+    form.addEventListener('submit', async e => {
+      e.preventDefault();
+      const res = await fetch(config.apiBaseUrl + config.endpoints.login, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: username.value, password: password.value }),
+      });
+      const token = res.headers.get('Authorization')?.split(' ')[1];
+      if (token) {
+        setToken(token);
+        location.href = 'store.html';
+      }
+    });
+  </script>
 </body>
 </html>

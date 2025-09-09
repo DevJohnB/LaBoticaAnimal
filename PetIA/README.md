@@ -1,29 +1,17 @@
-# PetIA Frontend
+# PetIA Static App
 
-Aplicación web estática que consume el plugin **PetIA App Bridge** para autenticación y catálogo.
+Aplicación web estática que consume los endpoints del plugin PetIA App Bridge.
 
 ## Configuración
-- Edita `config.js` y ajusta la variable `apiBaseUrl` con la URL de la instalación de WordPress.
+- El archivo `config.js` permite configurar la URL base de la API mediante `process.env.API_BASE_URL`, `window.API_BASE_URL` o el valor por defecto `https://laboticaanimal.com`.
 
 ## Uso
-La carpeta contiene varias páginas HTML:
-- `index.html` – formulario de inicio de sesión.
-- `store.html` – listado de productos.
-- `user.html` – edición de perfil.
-- `chat.html`, `recover.html`, `policy.html` y otras utilidades.
-
-Puedes servir la carpeta con cualquier servidor estático, por ejemplo:
-
-```bash
-npx http-server PetIA
-```
-
-## Desarrollo
-El código JavaScript está en `js/` y se apoya en `api.js` y `token.js` para las llamadas al backend y la gestión del token, almacenado en una cookie.
+1. Sirve la carpeta `PetIA/` desde cualquier servidor estático.
+2. Ajusta `API_BASE_URL` si tu WordPress corre en otra URL.
+3. Abre `index.html` para iniciar sesión.
 
 ## Pruebas
-Desde la raíz del repositorio se pueden ejecutar las pruebas unitarias de los módulos reutilizados:
-
+Ejecuta en la raíz del repositorio:
 ```bash
 npm test
 ```
