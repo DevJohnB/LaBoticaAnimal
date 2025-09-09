@@ -2,7 +2,6 @@
 
 require_once __DIR__ . '/class-petia-token-manager.php';
 require_once __DIR__ . '/class-petia-admin.php';
-require_once __DIR__ . '/class-petia-cors.php';
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
@@ -11,15 +10,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 class PetIA_App_Bridge {
 
     protected $token_manager;
-    protected $cors;
 
     public function __construct() {
         $this->token_manager = new PetIA_Token_Manager();
-        $this->cors          = new PetIA_CORS();
 
         add_action( 'rest_api_init', [ $this, 'register_routes' ] );
         add_filter( 'rest_authentication_errors', [ $this, 'authenticate_request' ] );
-        add_action( 'rest_api_init', [ $this->cors, 'add_cors_support' ], 15 );
 
         if ( is_admin() ) {
             new PetIA_Admin();
@@ -123,7 +119,7 @@ class PetIA_App_Bridge {
         ] );
     }
 
-    // Token, CORS and admin functionality moved to dedicated classes.
+    // Token and admin functionality moved to dedicated classes.
 
     /**
      * Handle user registration.
