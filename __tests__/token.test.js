@@ -14,10 +14,12 @@ describe('token utils', () => {
     expect(isTokenExpired(future)).toBe(false);
   });
 
-  test('clears cookie', () => {
+  test('clears stored token', () => {
     setToken('abc');
+    expect(sessionStorage.getItem('token')).toBe('abc');
     expect(getToken()).toBe('abc');
     clearToken();
     expect(getToken()).toBe('');
+    expect(sessionStorage.getItem('token')).toBeNull();
   });
 });
