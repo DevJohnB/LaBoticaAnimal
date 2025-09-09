@@ -31,7 +31,28 @@ class App_Bridge {
     }
 
     public function send_cors_headers( $served, $result, $request ) {
+        $origin = get_http_origin();
+        if ( $origin ) {
+            if ( rest_is_allowed_cors( $origin ) ) {
+                header( 'Access-Control-Allow-Origin: ' . esc_url_raw( $origin ) );
+                header( 'Vary: Origin' );
+            } else {
+                status_header( 403 );
+                return true;
+            }
+        } else {
+            header( 'Access-Control-Allow-Origin: *' );
+        }
+
+        header( 'Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS' );
+        header( 'Access-Control-Allow-Headers: Authorization, Content-Type' );
         header( 'Access-Control-Expose-Headers: Authorization' );
+
+        if ( 'OPTIONS' === $request->get_method() ) {
+            status_header( 200 );
+            return true;
+        }
+
         return $served;
     }
 
