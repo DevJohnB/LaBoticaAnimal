@@ -1,9 +1,5 @@
-async function loadConfig() {
-  if (!window.appConfig) {
-    window.appConfig = await fetch('config.json').then(r => r.json());
-  }
-  return window.appConfig;
-}
+import config from '../config.js';
+import { logout } from './auth.js';
 
 async function getProfile() {
   const token = localStorage.getItem('token');
@@ -11,19 +7,82 @@ async function getProfile() {
     window.location.href = 'index.html';
     return;
   }
-  const config = await loadConfig();
-  const url = config.apiBaseUrl + config.endpoints.profile.get;
+  const url = config.apiBaseUrl + config.endpoints.profile;
   const res = await fetch(url, {
     headers: { 'Authorization': `Bearer ${token}` }
   });
   if (res.ok) {
     const data = await res.json();
-    const container = document.getElementById('userData');
-    if (container) {
-      container.innerHTML = `<p><strong>${data.name || ''}</strong></p><p>${data.email || ''}</p>`;
-    }
+    renderProfileForm(data);
   } else {
     logout();
+  }
+}
+
+function renderProfileForm(data) {
+  const container = document.getElementById('userData');
+  if (!container) return;
+
+  const fields = [
+    ['display_name', 'Nombre para mostrar'],
+    ['email', 'Correo electrónico'],
+    ['username', 'Usuario'],
+    ['first_name', 'Nombre'],
+    ['last_name', 'Apellido'],
+    ['nickname', 'Apodo'],
+    ['description', 'Descripción'],
+    ['user_url', 'Sitio web']
+  ];
+
+  container.innerHTML = `
+    <form id="profileForm">
+      ${fields
+        .map(([key, label]) => {
+          const value = data[key] || '';
+          const readonly = key === 'email' || key === 'username' ? 'readonly' : '';
+          const input = key === 'description'
+            ? `<textarea name="${key}" ${readonly}>${value}</textarea>`
+            : `<input name="${key}" value="${value}" ${readonly}>`;
+          return `<label>${label}<br>${input}</label>`;
+        })
+        .join('<br>')}
+      <br><button type="submit" class="btn-primary">Actualizar</button>
+    </form>
+  `;
+
+  document
+    .getElementById('profileForm')
+    .addEventListener('submit', updateProfile);
+}
+
+async function updateProfile(e) {
+  e.preventDefault();
+  const token = localStorage.getItem('token');
+  if (!token) {
+    window.location.href = 'index.html';
+    return;
+  }
+
+  const form = e.target;
+  const data = Object.fromEntries(new FormData(form).entries());
+  delete data.username;
+  delete data.email;
+
+  const url = config.apiBaseUrl + config.endpoints.profile;
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify(data)
+  });
+
+  if (res.ok) {
+    alert('Datos actualizados');
+    getProfile();
+  } else {
+    alert('Error al actualizar');
   }
 }
 
