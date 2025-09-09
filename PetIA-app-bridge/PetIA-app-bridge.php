@@ -17,6 +17,7 @@ class PetIA_App_Bridge {
         add_action( 'rest_api_init', [ $this, 'register_routes' ] );
         add_filter( 'rest_authentication_errors', [ $this, 'authenticate_request' ] );
         add_action( 'rest_api_init', [ $this, 'add_cors_support' ], 15 );
+        add_action( 'init', [ $this, 'maybe_handle_preflight' ] );
 
         if ( is_admin() ) {
             add_action( 'admin_menu', [ $this, 'register_admin_page' ] );
@@ -124,8 +125,25 @@ class PetIA_App_Bridge {
             header( 'Access-Control-Allow-Methods: GET, POST, OPTIONS' );
             header( 'Access-Control-Allow-Headers: Authorization, Content-Type' );
             header( 'Access-Control-Allow-Credentials: true' );
+            if ( 'OPTIONS' === $_SERVER['REQUEST_METHOD'] ) {
+                status_header( 200 );
+                return true;
+            }
             return $value;
-        } );
+        }, 10, 3 );
+    }
+
+    /**
+     * Handle browser preflight requests.
+     */
+    public function maybe_handle_preflight() {
+        if ( isset( $_SERVER['REQUEST_METHOD'] ) && 'OPTIONS' === $_SERVER['REQUEST_METHOD'] ) {
+            header( 'Access-Control-Allow-Origin: *' );
+            header( 'Access-Control-Allow-Methods: GET, POST, OPTIONS' );
+            header( 'Access-Control-Allow-Headers: Authorization, Content-Type' );
+            header( 'Access-Control-Allow-Credentials: true' );
+            exit;
+        }
     }
 
     /**
