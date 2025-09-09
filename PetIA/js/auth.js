@@ -1,9 +1,10 @@
 import config from '../config.js';
+import { apiFetch } from './apiFetch.js';
 
 async function login(email, password) {
   const url = config.apiBaseUrl + config.endpoints.login;
   const payload = { email, password };
-  const res = await fetch(url, {
+  const res = await apiFetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload)
@@ -18,10 +19,11 @@ async function login(email, password) {
 
 async function requestPasswordReset(email) {
   const url = config.apiBaseUrl + config.endpoints.passwordResetRequest;
-  await fetch(url, {
+  await apiFetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email })
+    body: JSON.stringify({ email }),
+    skipAuthError: true
   });
 }
 
@@ -30,10 +32,7 @@ export async function logout() {
   if (token) {
     const url = config.apiBaseUrl + config.endpoints.logout;
     try {
-      await fetch(url, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      await apiFetch(url, { method: 'POST', skipAuthError: true });
     } catch (err) {
       console.error('Logout error', err);
     }
@@ -50,9 +49,7 @@ export async function validateToken() {
   }
   const url = config.apiBaseUrl + config.endpoints.validateToken;
   try {
-    const res = await fetch(url, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
+    const res = await apiFetch(url, { skipAuthError: true });
     if (!res.ok) {
       await logout();
       return false;

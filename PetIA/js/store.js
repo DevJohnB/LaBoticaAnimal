@@ -1,5 +1,6 @@
 import config from '../config.js';
 import { logout, validateToken } from './auth.js';
+import { apiFetch } from './apiFetch.js';
 
 async function init() {
   const logoutBtn = document.getElementById('logoutBtn');
@@ -14,12 +15,9 @@ async function init() {
 }
 
 async function loadProducts() {
-  const token = localStorage.getItem('token');
   const url = config.apiBaseUrl + config.endpoints.products;
   try {
-    const res = await fetch(url, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
+    const res = await apiFetch(url);
     if (!res.ok) throw new Error('Failed to load products');
     const productsData = await res.json();
     renderProducts(productsData);
@@ -45,12 +43,9 @@ function renderProducts(products) {
 }
 
 async function loadCategories() {
-  const token = localStorage.getItem('token');
   const url = config.apiBaseUrl + config.endpoints.productCategories;
   try {
-    const res = await fetch(url, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
+    const res = await apiFetch(url);
     if (!res.ok) throw new Error('Failed to load categories');
     const data = await res.json();
     renderCategories(data);
@@ -76,12 +71,9 @@ function renderCategories(categories) {
 }
 
 async function loadBrands() {
-  const token = localStorage.getItem('token');
   const url = config.apiBaseUrl + config.endpoints.brands;
   try {
-    const res = await fetch(url, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
+    const res = await apiFetch(url);
     if (!res.ok) throw new Error('Failed to load brands');
     const data = await res.json();
     renderBrands(data);

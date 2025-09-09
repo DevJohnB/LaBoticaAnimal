@@ -1,14 +1,12 @@
 import config from '../config.js';
 import { logout, validateToken } from './auth.js';
+import { apiFetch } from './apiFetch.js';
 
 async function getProfile() {
   const valid = await validateToken();
   if (!valid) return;
-  const token = localStorage.getItem('token');
   const url = config.apiBaseUrl + config.endpoints.profile;
-  const res = await fetch(url, {
-    headers: { 'Authorization': `Bearer ${token}` }
-  });
+  const res = await apiFetch(url);
   if (res.ok) {
     const data = await res.json();
     renderProfileForm(data);
@@ -55,24 +53,15 @@ function renderProfileForm(data) {
 
 async function updateProfile(e) {
   e.preventDefault();
-  const token = localStorage.getItem('token');
-  if (!token) {
-    window.location.href = 'index.html';
-    return;
-  }
-
   const form = e.target;
   const data = Object.fromEntries(new FormData(form).entries());
   delete data.username;
   delete data.email;
 
   const url = config.apiBaseUrl + config.endpoints.profile;
-  const res = await fetch(url, {
+  const res = await apiFetch(url, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`
-    },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data)
   });
 
