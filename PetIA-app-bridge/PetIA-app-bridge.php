@@ -144,12 +144,8 @@ class PetIA_App_Bridge {
             }
 
             if ( 'OPTIONS' === $_SERVER['REQUEST_METHOD'] ) {
-                status_header( $origin_valid ? 200 : 400 );
+                status_header( 200 );
                 return true;
-            }
-
-            if ( ! $origin_valid ) {
-                status_header( 400 );
             }
 
             return $value;
@@ -179,11 +175,9 @@ class PetIA_App_Bridge {
                 header( 'Access-Control-Allow-Methods: GET, POST, OPTIONS' );
                 header( 'Access-Control-Allow-Headers: Authorization, Content-Type' );
                 header( 'Access-Control-Allow-Credentials: true' );
-                status_header( 200 );
-            } else {
-                status_header( 400 );
             }
 
+            status_header( 200 );
             exit;
         }
     }

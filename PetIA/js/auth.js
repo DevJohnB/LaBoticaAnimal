@@ -1,4 +1,5 @@
 import config from '../config.js';
+import { setToken, getToken, clearToken, fetchWithAuth } from './token.js';
 
 async function login(email, password) {
   const url = config.apiBaseUrl + config.endpoints.login;
@@ -13,7 +14,7 @@ async function login(email, password) {
     throw new Error(message || 'Login failed');
   }
   const data = await res.json();
-  localStorage.setItem('token', data.token);
+  setToken(data.token);
 }
 
 async function requestPasswordReset(email) {
@@ -26,33 +27,28 @@ async function requestPasswordReset(email) {
 }
 
 export async function logout() {
-  const token = localStorage.getItem('token');
+  const token = getToken();
   if (token) {
     const url = config.apiBaseUrl + config.endpoints.logout;
     try {
-      await fetch(url, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      await fetchWithAuth(url, { method: 'POST' });
     } catch (err) {
       console.error('Logout error', err);
     }
   }
-  localStorage.removeItem('token');
+  clearToken();
   window.location.href = 'index.html';
 }
 
 export async function validateToken() {
-  const token = localStorage.getItem('token');
+  const token = getToken();
   if (!token) {
     await logout();
     return false;
   }
   const url = config.apiBaseUrl + config.endpoints.validateToken;
   try {
-    const res = await fetch(url, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
+    const res = await fetchWithAuth(url);
     if (!res.ok) {
       await logout();
       return false;
