@@ -7,6 +7,9 @@ if ( ! defined('AUTH_KEY') ) {
 if ( ! defined('DAY_IN_SECONDS') ) {
     define('DAY_IN_SECONDS', 86400);
 }
+if ( ! defined('ABSPATH') ) {
+    define('ABSPATH', __DIR__ . '/');
+}
 
 // Minimal WordPress stubs
 if ( ! function_exists('add_action') ) { function add_action(...$args) {} }

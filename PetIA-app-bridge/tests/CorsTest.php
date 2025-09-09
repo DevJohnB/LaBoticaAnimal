@@ -1,31 +1,45 @@
 <?php
 use PHPUnit\Framework\TestCase;
 
-if ( ! function_exists('get_site_url') ) {
-    function get_site_url(){ return 'https://default.com'; }
-}
 
 if ( ! defined('ABSPATH') ) {
     define('ABSPATH', __DIR__ . '/');
 }
 
+if ( ! function_exists('get_site_url') ) {
+    function get_site_url(){ return 'https://default.com'; }
+}
+
 require_once __DIR__ . '/../vendor/autoload.php';
 
 class CorsTest extends TestCase {
-    public function testAllowsAllOriginsByDefault() {
-        require __DIR__ . '/../includes/class-petia-cors.php';
+    /**
+     * @runInSeparateProcess
+     */
+    public function testOriginAllowed() {
+        define('PETIA_ALLOWED_ORIGINS', 'https://allowed.com,https://other.com');
+
         $cors = new PetIA_CORS();
-        $this->assertTrue($cors->is_origin_allowed('https://any.com'));
+        $this->assertTrue($cors->is_origin_allowed('https://allowed.com'));
+        $this->assertFalse($cors->is_origin_allowed('https://evil.com'));
     }
 
     /**
      * @runInSeparateProcess
      */
-    public function testOriginAllowedWithConfiguredList() {
-        define('PETIA_ALLOWED_ORIGINS', 'https://allowed.com,https://other.com');
-        require __DIR__ . '/../includes/class-petia-cors.php';
-        $cors = new PetIA_CORS();
-        $this->assertTrue($cors->is_origin_allowed('https://allowed.com'));
-        $this->assertFalse($cors->is_origin_allowed('https://evil.com'));
+    public function testWildcardAllowsAllOrigins() {
+        define('PETIA_ALLOWED_ORIGINS', '*');
+        $cors   = new PetIA_CORS();
+        $origin = 'https://example.com';
+
+        $this->assertTrue($cors->is_origin_allowed($origin));
+
+        $prop = new ReflectionProperty(PetIA_CORS::class, 'allow_all');
+        $prop->setAccessible(true);
+        $this->assertTrue($prop->getValue($cors));
+
+        $method = new ReflectionMethod(PetIA_CORS::class, 'send_cors_headers');
+        $method->setAccessible(true);
+        $method->invoke($cors, $origin);
     }
 }
