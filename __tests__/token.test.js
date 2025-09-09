@@ -9,7 +9,7 @@ function createToken(expSeconds) {
 
 describe('token utilities', () => {
   beforeEach(() => {
-    localStorage.clear();
+    document.cookie = '';
     global.fetch = jest.fn().mockResolvedValue({ ok: true });
   });
 
@@ -23,7 +23,7 @@ describe('token utilities', () => {
     const token = createToken(Math.floor(Date.now() / 1000) - 10);
     setToken(token);
     expect(getToken()).toBeNull();
-    expect(localStorage.getItem('token')).toBeNull();
+    expect(document.cookie).not.toContain('token=');
   });
 
   test('fetchWithAuth adds header', async () => {
@@ -31,7 +31,8 @@ describe('token utilities', () => {
     setToken(token);
     await fetchWithAuth('/test');
     expect(fetch).toHaveBeenCalledWith('/test', expect.objectContaining({
-      headers: { Authorization: `Bearer ${token}` }
+      headers: { Authorization: `Bearer ${token}` },
+      credentials: 'include'
     }));
   });
 
@@ -40,7 +41,8 @@ describe('token utilities', () => {
     setToken(token);
     await fetchWithAuth('/test');
     expect(fetch).toHaveBeenCalledWith('/test', expect.objectContaining({
-      headers: {}
+      headers: {},
+      credentials: 'include'
     }));
   });
 });

@@ -17,7 +17,6 @@ class PetIA_App_Bridge {
         add_action( 'rest_api_init', [ $this, 'register_routes' ] );
         add_filter( 'rest_authentication_errors', [ $this, 'authenticate_request' ] );
         add_action( 'rest_api_init', [ $this, 'add_cors_support' ], 15 );
-        add_action( 'init', [ $this, 'maybe_handle_preflight' ] );
 
         if ( is_admin() ) {
             add_action( 'admin_menu', [ $this, 'register_admin_page' ] );
@@ -150,22 +149,6 @@ class PetIA_App_Bridge {
     /**
      * Handle browser preflight requests.
      */
-    public function maybe_handle_preflight() {
-        if ( isset( $_SERVER['REQUEST_METHOD'] ) && 'OPTIONS' === $_SERVER['REQUEST_METHOD'] ) {
-            $origin  = $this->get_request_origin();
-            $allowed = $this->is_origin_allowed( $origin );
-
-            if ( $origin && $allowed ) {
-                $this->send_cors_headers( $origin );
-                status_header( 200 );
-            } else {
-                status_header( 403 );
-            }
-
-            exit;
-        }
-    }
-
     protected function get_request_origin() {
         $origin = '';
         if ( ! empty( $_SERVER['HTTP_ORIGIN'] ) ) {
@@ -200,8 +183,9 @@ class PetIA_App_Bridge {
      * Handle user registration.
      */
     public function handle_register( WP_REST_Request $request ) {
-        $email    = sanitize_email( $request->get_param( 'email' ) );
-        $password = $request->get_param( 'password' );
+        $params   = $request->get_json_params();
+        $email    = isset( $params['email'] ) ? sanitize_email( wp_unslash( $params['email'] ) ) : '';
+        $password = isset( $params['password'] ) ? wp_unslash( $params['password'] ) : '';
 
         if ( empty( $email ) || empty( $password ) ) {
             return new WP_Error( 'missing_fields', __( 'Email and password are required.', 'petia-app-bridge' ), [ 'status' => 400 ] );
@@ -238,8 +222,9 @@ class PetIA_App_Bridge {
      * Handle user login and token generation.
      */
     public function handle_login( WP_REST_Request $request ) {
-        $email    = sanitize_email( $request->get_param( 'email' ) );
-        $password = $request->get_param( 'password' );
+        $params   = $request->get_json_params();
+        $email    = isset( $params['email'] ) ? sanitize_email( wp_unslash( $params['email'] ) ) : '';
+        $password = isset( $params['password'] ) ? wp_unslash( $params['password'] ) : '';
 
         if ( empty( $email ) || empty( $password ) ) {
             return new WP_Error( 'missing_fields', __( 'Email and password are required.', 'petia-app-bridge' ), [ 'status' => 400 ] );
@@ -311,8 +296,9 @@ class PetIA_App_Bridge {
      * Send password reset email to user.
      */
     public function handle_password_reset_request( WP_REST_Request $request ) {
-        $username = sanitize_user( $request->get_param( 'username' ) );
-        $email    = sanitize_email( $request->get_param( 'email' ) );
+        $params   = $request->get_json_params();
+        $username = isset( $params['username'] ) ? sanitize_user( wp_unslash( $params['username'] ) ) : '';
+        $email    = isset( $params['email'] ) ? sanitize_email( wp_unslash( $params['email'] ) ) : '';
 
         if ( empty( $username ) && empty( $email ) ) {
             return new WP_Error( 'missing_fields', __( 'Username or email is required.', 'petia-app-bridge' ), [ 'status' => 400 ] );

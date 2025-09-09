@@ -20,7 +20,7 @@ function createToken(expSeconds) {
 
 describe('apiRequest', () => {
   beforeEach(() => {
-    localStorage.clear();
+    document.cookie = '';
   });
 
   test('adds base URL and authorization header', async () => {
@@ -35,7 +35,10 @@ describe('apiRequest', () => {
     await apiRequest('/test');
     expect(fetch).toHaveBeenCalledWith(
       config.apiBaseUrl + '/test',
-      expect.objectContaining({ headers: expect.objectContaining({ Authorization: `Bearer ${token}` }) })
+      expect.objectContaining({
+        headers: expect.objectContaining({ Authorization: `Bearer ${token}` }),
+        credentials: 'include'
+      })
     );
   });
 

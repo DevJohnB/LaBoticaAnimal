@@ -19,7 +19,7 @@ npx http-server PetIA
 ```
 
 ## Desarrollo
-El código JavaScript está en `js/` y se apoya en `api.js` y `token.js` para las llamadas al backend y la gestión del token.
+El código JavaScript está en `js/` y se apoya en `api.js` y `token.js` para las llamadas al backend y la gestión del token, almacenado en una cookie.
 
 ## Pruebas
 Desde la raíz del repositorio se pueden ejecutar las pruebas unitarias de los módulos reutilizados:
