@@ -134,9 +134,10 @@ class PetIA_App_Bridge {
                 $origin = trim( $_SERVER['HTTP_X_FORWARDED_ORIGIN'] );
             }
 
-            $origin_valid = $origin && 'null' !== $origin;
+            $origin_provided = '' !== $origin;
+            $origin_valid    = ! $origin_provided || 'null' !== $origin;
 
-            if ( $origin_valid ) {
+            if ( $origin_provided && $origin_valid ) {
                 header( "Access-Control-Allow-Origin: {$origin}" );
                 header( 'Access-Control-Allow-Methods: GET, POST, OPTIONS' );
                 header( 'Access-Control-Allow-Headers: Authorization, Content-Type' );
@@ -147,6 +148,11 @@ class PetIA_App_Bridge {
                 status_header( 200 );
                 return true;
             }
+
+            if ( $origin_provided && ! $origin_valid ) {
+                status_header( 400 );
+            }
+
 
             return $value;
         }, 10, 3 );
@@ -168,13 +174,19 @@ class PetIA_App_Bridge {
                 $origin = trim( $_SERVER['HTTP_X_FORWARDED_ORIGIN'] );
             }
 
-            $origin_valid = $origin && 'null' !== $origin;
+            $origin_provided = '' !== $origin;
+            $origin_valid    = ! $origin_provided || 'null' !== $origin;
 
-            if ( $origin_valid ) {
+            if ( $origin_provided && $origin_valid ) {
                 header( "Access-Control-Allow-Origin: {$origin}" );
                 header( 'Access-Control-Allow-Methods: GET, POST, OPTIONS' );
                 header( 'Access-Control-Allow-Headers: Authorization, Content-Type' );
                 header( 'Access-Control-Allow-Credentials: true' );
+                status_header( 200 );
+            } elseif ( $origin_provided && ! $origin_valid ) {
+                status_header( 400 );
+            } else {
+                status_header( 200 );
             }
 
             status_header( 200 );
