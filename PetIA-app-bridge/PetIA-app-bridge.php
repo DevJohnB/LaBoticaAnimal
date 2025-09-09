@@ -35,5 +35,51 @@ if ( ! class_exists( '\\Firebase\\JWT\\JWT' ) ) {
 
 require_once __DIR__ . '/includes/class-petia-app-bridge.php';
 
-register_activation_hook( __FILE__, [ 'PetIA_App_Bridge', 'activate' ] );
-new PetIA_App_Bridge();
+register_activation_hook( __FILE__, function() {
+    if ( ! file_exists( __DIR__ . '/vendor/autoload.php' ) ) {
+        deactivate_plugins( plugin_basename( __FILE__ ) );
+        add_action( 'admin_notices', function() {
+            echo '<div class="error"><p>' . esc_html__( 'PetIA App Bridge requires composer dependencies. Please run composer install.', 'petia-app-bridge' ) . '</p></div>';
+        } );
+        return;
+    }
+
+    require_once __DIR__ . '/vendor/autoload.php';
+
+    if ( ! class_exists( 'Firebase\\JWT\\JWT' ) ) {
+        deactivate_plugins( plugin_basename( __FILE__ ) );
+        add_action( 'admin_notices', function() {
+            echo '<div class="error"><p>' . esc_html__( 'PetIA App Bridge requires the Firebase JWT library. Please run composer install.', 'petia-app-bridge' ) . '</p></div>';
+        } );
+        return;
+    }
+
+    if ( ! defined( 'AUTH_KEY' ) || empty( AUTH_KEY ) || 'change_this_secret_key' === AUTH_KEY ) {
+        deactivate_plugins( plugin_basename( __FILE__ ) );
+        add_action( 'admin_notices', function() {
+            echo '<div class="error"><p>' . esc_html__( 'AUTH_KEY must be defined in wp-config.php.', 'petia-app-bridge' ) . '</p></div>';
+        } );
+        return;
+    }
+
+    PetIA_App_Bridge::activate();
+} );
+
+add_action( 'plugins_loaded', function() {
+    if ( ! class_exists( 'WooCommerce' ) ) {
+        deactivate_plugins( plugin_basename( __FILE__ ) );
+        add_action( 'admin_notices', function() {
+            echo '<div class="error"><p>' . esc_html__( 'PetIA App Bridge requires WooCommerce to be active.', 'petia-app-bridge' ) . '</p></div>';
+        } );
+        return;
+    }
+
+    try {
+        new PetIA_App_Bridge();
+    } catch ( Exception $e ) {
+        deactivate_plugins( plugin_basename( __FILE__ ) );
+        add_action( 'admin_notices', function() use ( $e ) {
+            echo '<div class="error"><p>' . esc_html( $e->getMessage() ) . '</p></div>';
+        } );
+    }
+} );
