@@ -3,7 +3,7 @@ import { apiRequest } from '../PetIA/js/api.js';
 import { parseToken, setToken, clearToken } from '../PetIA/js/token.js';
 import 'whatwg-fetch';
 
-describe('error handling', () => {
+  describe('error handling', () => {
   beforeEach(() => {
     clearToken();
     global.fetch = jest.fn();
@@ -13,13 +13,14 @@ describe('error handling', () => {
     expect(parseToken('invalid')).toBeNull();
   });
 
-  test('apiRequest throws when body contains error', async () => {
-    setToken('abc');
-    global.fetch.mockResolvedValue({
-      status: 200,
-      headers: new Headers({ 'content-type': 'application/json' }),
-      json: async () => ({ error: 'fail' }),
+    test('apiRequest returns body even if it contains error field', async () => {
+      setToken('abc');
+      global.fetch.mockResolvedValue({
+        status: 200,
+        ok: true,
+        headers: new Headers({ 'content-type': 'application/json' }),
+        json: async () => ({ error: 'fail' }),
+      });
+      await expect(apiRequest('/test')).resolves.toEqual({ error: 'fail' });
     });
-    await expect(apiRequest('/test')).rejects.toThrow('fail');
   });
-});
