@@ -1,14 +1,16 @@
 <?php
-class PetIA_App_Bridge {
+namespace PetIA;
+
+class App_Bridge {
     private $token_manager;
 
     public function __construct() {
-        $this->token_manager = new PetIA_Token_Manager();
+        $this->token_manager = new Token_Manager();
         add_action( 'rest_api_init', [ $this, 'register_routes' ] );
         add_filter( 'rest_authentication_errors', [ $this, 'authenticate_requests' ] );
 
         if ( is_admin() ) {
-            new PetIA_Admin();
+            new Admin();
         }
     }
 
@@ -38,12 +40,12 @@ class PetIA_App_Bridge {
         try {
             $decoded = $this->token_manager->decode_token( $token );
             if ( $this->token_manager->is_token_revoked( $decoded->jti ) ) {
-                return new WP_Error( 'token_revoked', 'Token revoked', [ 'status' => 401 ] );
+                return new \WP_Error( 'token_revoked', 'Token revoked', [ 'status' => 401 ] );
             }
             wp_set_current_user( $decoded->data->user_id );
             return $result;
-        } catch ( Exception $e ) {
-            return new WP_Error( 'invalid_token', $e->getMessage(), [ 'status' => 401 ] );
+        } catch ( \Exception $e ) {
+            return new \WP_Error( 'invalid_token', $e->getMessage(), [ 'status' => 401 ] );
         }
     }
 
@@ -121,7 +123,7 @@ class PetIA_App_Bridge {
         ] );
     }
 
-    public function handle_register( WP_REST_Request $request ) {
+    public function handle_register( \WP_REST_Request $request ) {
         $params = $request->get_json_params();
         $user = wp_create_user( $params['username'], $params['password'], $params['email'] );
         if ( is_wp_error( $user ) ) {
@@ -130,7 +132,7 @@ class PetIA_App_Bridge {
         return [ 'success' => true, 'user_id' => $user ];
     }
 
-    public function handle_login( WP_REST_Request $request ) {
+    public function handle_login( \WP_REST_Request $request ) {
         $creds = [
             'user_login'    => $request['username'],
             'user_password' => $request['password'],
@@ -146,43 +148,43 @@ class PetIA_App_Bridge {
         return $wp_response;
     }
 
-    public function handle_logout( WP_REST_Request $request ) {
+    public function handle_logout( \WP_REST_Request $request ) {
         $token = $this->token_manager->get_authorization_header();
         if ( $token ) {
             try {
                 $decoded = $this->token_manager->decode_token( $token );
                 $this->token_manager->revoke_token( $decoded->jti );
-            } catch ( Exception $e ) {
+            } catch ( \Exception $e ) {
                 // ignore
             }
         }
         return [ 'success' => true ];
     }
 
-    public function handle_validate_token( WP_REST_Request $request ) {
+    public function handle_validate_token( \WP_REST_Request $request ) {
         $token = $this->token_manager->get_authorization_header();
         if ( ! $token ) {
-            return new WP_Error( 'no_token', 'No token provided', [ 'status' => 401 ] );
+            return new \WP_Error( 'no_token', 'No token provided', [ 'status' => 401 ] );
         }
         try {
             $decoded = $this->token_manager->decode_token( $token );
             return [ 'valid' => true, 'user_id' => $decoded->data->user_id ];
-        } catch ( Exception $e ) {
-            return new WP_Error( 'invalid_token', $e->getMessage(), [ 'status' => 401 ] );
+        } catch ( \Exception $e ) {
+            return new \WP_Error( 'invalid_token', $e->getMessage(), [ 'status' => 401 ] );
         }
     }
 
-    public function handle_password_reset_request( WP_REST_Request $request ) {
+    public function handle_password_reset_request( \WP_REST_Request $request ) {
         $email = $request['email'];
         $user  = get_user_by( 'email', $email );
         if ( ! $user ) {
-            return new WP_Error( 'invalid_email', 'Email not found', [ 'status' => 400 ] );
+            return new \WP_Error( 'invalid_email', 'Email not found', [ 'status' => 400 ] );
         }
         retrieve_password( $user->user_login );
         return [ 'success' => true ];
     }
 
-    public function handle_password_reset( WP_REST_Request $request ) {
+    public function handle_password_reset( \WP_REST_Request $request ) {
         $login    = $request['login'];
         $key      = $request['key'];
         $password = $request['password'];
@@ -194,7 +196,7 @@ class PetIA_App_Bridge {
         return [ 'success' => true ];
     }
 
-    public function handle_profile_get( WP_REST_Request $request ) {
+    public function handle_profile_get( \WP_REST_Request $request ) {
         $user = wp_get_current_user();
         return [
             'id'         => $user->ID,
@@ -204,7 +206,7 @@ class PetIA_App_Bridge {
         ];
     }
 
-    public function handle_profile_post( WP_REST_Request $request ) {
+    public function handle_profile_post( \WP_REST_Request $request ) {
         $user_id = get_current_user_id();
         $params  = $request->get_json_params();
         wp_update_user( [
@@ -216,15 +218,15 @@ class PetIA_App_Bridge {
         return [ 'success' => true ];
     }
 
-    public function handle_order_addresses_get( WP_REST_Request $request ) {
-        return new WP_Error( 'not_implemented', 'Address retrieval not implemented', [ 'status' => 501 ] );
+    public function handle_order_addresses_get( \WP_REST_Request $request ) {
+        return new \WP_Error( 'not_implemented', 'Address retrieval not implemented', [ 'status' => 501 ] );
     }
 
-    public function handle_order_addresses_post( WP_REST_Request $request ) {
-        return new WP_Error( 'not_implemented', 'Address update not implemented', [ 'status' => 501 ] );
+    public function handle_order_addresses_post( \WP_REST_Request $request ) {
+        return new \WP_Error( 'not_implemented', 'Address update not implemented', [ 'status' => 501 ] );
     }
 
-    public function handle_product_categories( WP_REST_Request $request ) {
+    public function handle_product_categories( \WP_REST_Request $request ) {
         if ( ! function_exists( 'get_terms' ) ) {
             return [];
         }
@@ -232,7 +234,7 @@ class PetIA_App_Bridge {
         return wp_list_pluck( $terms, 'name', 'term_id' );
     }
 
-    public function handle_products( WP_REST_Request $request ) {
+    public function handle_products( \WP_REST_Request $request ) {
         if ( ! function_exists( 'wc_get_products' ) ) {
             return [];
         }
@@ -248,7 +250,7 @@ class PetIA_App_Bridge {
         return $data;
     }
 
-    public function handle_brands( WP_REST_Request $request ) {
+    public function handle_brands( \WP_REST_Request $request ) {
         if ( ! function_exists( 'get_terms' ) ) {
             return [];
         }
@@ -256,7 +258,7 @@ class PetIA_App_Bridge {
         return wp_list_pluck( $terms, 'name', 'term_id' );
     }
 
-    public function handle_wc_proxy( WP_REST_Request $request ) {
-        return new WP_Error( 'not_implemented', 'Proxy not implemented', [ 'status' => 501 ] );
+    public function handle_wc_proxy( \WP_REST_Request $request ) {
+        return new \WP_Error( 'not_implemented', 'Proxy not implemented', [ 'status' => 501 ] );
     }
 }

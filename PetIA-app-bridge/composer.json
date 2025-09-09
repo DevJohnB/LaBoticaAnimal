@@ -2,6 +2,11 @@
     "name": "petia/app-bridge",
     "description": "Dependencies for the PetIA App Bridge WordPress plugin",
     "type": "wordpress-plugin",
+    "autoload": {
+        "psr-4": {
+            "PetIA\\": "includes/"
+        }
+    },
     "require": {
         "firebase/php-jwt": "^6.10"
     }

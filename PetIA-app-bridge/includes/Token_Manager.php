@@ -1,13 +1,15 @@
 <?php
+namespace PetIA;
+
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
 
-class PetIA_Token_Manager {
+class Token_Manager {
     private $secret;
 
     public function __construct() {
         if ( ! defined( 'AUTH_KEY' ) ) {
-            throw new Exception( 'AUTH_KEY is not defined' );
+            throw new \Exception( 'AUTH_KEY is not defined' );
         }
         $this->secret = AUTH_KEY;
     }
