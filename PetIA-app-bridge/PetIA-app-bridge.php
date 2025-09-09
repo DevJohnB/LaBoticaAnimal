@@ -13,7 +13,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 if ( file_exists( __DIR__ . '/vendor/autoload.php' ) ) {
     require_once __DIR__ . '/vendor/autoload.php';
 } else {
-    error_log( 'PetIA App Bridge: missing vendor/autoload.php. Run composer install.' );
+    error_log( 'PetIA App Bridge: missing vendor/autoload.php.' );
     return;
 }
 
