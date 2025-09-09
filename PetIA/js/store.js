@@ -1,6 +1,6 @@
 import config from '../config.js';
 import { logout, validateToken } from './auth.js';
-import { fetchWithAuth } from './token.js';
+import { apiRequest } from './api.js';
 
 async function init() {
   const logoutBtn = document.getElementById('logoutBtn');
@@ -15,11 +15,8 @@ async function init() {
 }
 
 async function loadProducts() {
-  const url = config.apiBaseUrl + config.endpoints.products;
   try {
-    const res = await fetchWithAuth(url);
-    if (!res.ok) throw new Error('Failed to load products');
-    const productsData = await res.json();
+    const productsData = await apiRequest(config.endpoints.products);
     renderProducts(productsData);
   } catch (err) {
     console.error(err);
@@ -43,11 +40,8 @@ function renderProducts(products) {
 }
 
 async function loadCategories() {
-  const url = config.apiBaseUrl + config.endpoints.productCategories;
   try {
-    const res = await fetchWithAuth(url);
-    if (!res.ok) throw new Error('Failed to load categories');
-    const data = await res.json();
+    const data = await apiRequest(config.endpoints.productCategories);
     renderCategories(data);
   } catch (err) {
     console.error(err);
@@ -71,11 +65,8 @@ function renderCategories(categories) {
 }
 
 async function loadBrands() {
-  const url = config.apiBaseUrl + config.endpoints.brands;
   try {
-    const res = await fetchWithAuth(url);
-    if (!res.ok) throw new Error('Failed to load brands');
-    const data = await res.json();
+    const data = await apiRequest(config.endpoints.brands);
     renderBrands(data);
   } catch (err) {
     console.error(err);

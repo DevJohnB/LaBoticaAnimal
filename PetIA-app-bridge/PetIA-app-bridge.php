@@ -131,10 +131,7 @@ class PetIA_App_Bridge {
             $allowed = $this->is_origin_allowed( $origin );
 
             if ( $origin && $allowed ) {
-                header( "Access-Control-Allow-Origin: {$origin}" );
-                header( 'Access-Control-Allow-Methods: GET, POST, OPTIONS' );
-                header( 'Access-Control-Allow-Headers: Authorization, Content-Type' );
-                header( 'Access-Control-Allow-Credentials: true' );
+                $this->send_cors_headers( $origin );
             }
 
             if ( 'OPTIONS' === $_SERVER['REQUEST_METHOD'] ) {
@@ -159,10 +156,7 @@ class PetIA_App_Bridge {
             $allowed = $this->is_origin_allowed( $origin );
 
             if ( $origin && $allowed ) {
-                header( "Access-Control-Allow-Origin: {$origin}" );
-                header( 'Access-Control-Allow-Methods: GET, POST, OPTIONS' );
-                header( 'Access-Control-Allow-Headers: Authorization, Content-Type' );
-                header( 'Access-Control-Allow-Credentials: true' );
+                $this->send_cors_headers( $origin );
                 status_header( 200 );
             } else {
                 status_header( 403 );
@@ -185,6 +179,13 @@ class PetIA_App_Bridge {
     protected function is_origin_allowed( $origin ) {
         $allowed = defined( 'PETIA_ALLOWED_ORIGINS' ) ? array_map( 'trim', explode( ',', PETIA_ALLOWED_ORIGINS ) ) : [ get_site_url() ];
         return in_array( $origin, $allowed, true );
+    }
+
+    protected function send_cors_headers( $origin ) {
+        header( "Access-Control-Allow-Origin: {$origin}" );
+        header( 'Access-Control-Allow-Methods: GET, POST, OPTIONS' );
+        header( 'Access-Control-Allow-Headers: Authorization, Content-Type' );
+        header( 'Access-Control-Allow-Credentials: true' );
     }
 
     protected function get_secret_key() {
