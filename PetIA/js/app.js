@@ -1,14 +1,12 @@
 import config from '../config.js';
 import { logout, validateToken } from './auth.js';
+import { fetchWithAuth, getToken } from './token.js';
 
 async function getProfile() {
   const valid = await validateToken();
   if (!valid) return;
-  const token = localStorage.getItem('token');
   const url = config.apiBaseUrl + config.endpoints.profile;
-  const res = await fetch(url, {
-    headers: { 'Authorization': `Bearer ${token}` }
-  });
+  const res = await fetchWithAuth(url);
   if (res.ok) {
     const data = await res.json();
     renderProfileForm(data);
@@ -55,7 +53,7 @@ function renderProfileForm(data) {
 
 async function updateProfile(e) {
   e.preventDefault();
-  const token = localStorage.getItem('token');
+  const token = getToken();
   if (!token) {
     window.location.href = 'index.html';
     return;
@@ -67,12 +65,9 @@ async function updateProfile(e) {
   delete data.email;
 
   const url = config.apiBaseUrl + config.endpoints.profile;
-  const res = await fetch(url, {
+  const res = await fetchWithAuth(url, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`
-    },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data)
   });
 
