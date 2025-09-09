@@ -10,12 +10,11 @@ export function clearToken() {
   localStorage.removeItem('token');
 }
 
-export function authHeaders(headers = {}) {
-  const token = getToken();
-  return token ? { ...headers, Authorization: `Bearer ${token}` } : { ...headers };
-}
-
 export async function fetchWithAuth(url, options = {}) {
-  const headers = authHeaders(options.headers || {});
+  const token = getToken();
+  const baseHeaders = options.headers || {};
+  const headers = token
+    ? { ...baseHeaders, Authorization: `Bearer ${token}` }
+    : baseHeaders;
   return fetch(url, { ...options, headers });
 }
