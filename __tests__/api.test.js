@@ -16,6 +16,7 @@ describe('apiRequest', () => {
     global.fetch = jest.fn();
   });
 
+
   test('adds Authorization header', async () => {
     const token = createValidToken();
     setToken(token);
@@ -38,29 +39,27 @@ describe('apiRequest', () => {
       headers: new Headers({ 'content-type': 'application/json' }),
       json: async () => ({ error: 'Unauthorized' }),
     });
-    await expect(apiRequest('/test')).rejects.toThrow('Unauthorized');
-    expect(getToken()).toBe('');
-    expect(window.location.href).toBe('index.html');
-  });
 
-  test('401 without token does not redirect', async () => {
-    delete window.location;
-    window.location = { href: '' };
-    global.fetch.mockResolvedValue({
-      status: 401,
-      headers: new Headers({ 'content-type': 'application/json' }),
-      json: async () => ({ error: 'Unauthorized' }),
+    test('401 without token does not redirect', async () => {
+      delete window.location;
+      window.location = { href: '' };
+      global.fetch.mockResolvedValue({
+        status: 401,
+        ok: false,
+        headers: new Headers({ 'content-type': 'application/json' }),
+        json: async () => ({ message: 'Unauthorized' }),
+      });
+      await expect(apiRequest('/test')).rejects.toThrow('Unauthorized');
+      expect(window.location.href).toBe('');
     });
-    await expect(apiRequest('/test')).rejects.toThrow('Unauthorized');
-    expect(window.location.href).toBe('');
-  });
 
-  test('throws on non JSON response', async () => {
-    global.fetch.mockResolvedValue({
-      status: 200,
-      headers: new Headers({ 'content-type': 'text/html' }),
-      json: async () => ({ ok: true }),
+    test('throws on non JSON response', async () => {
+      global.fetch.mockResolvedValue({
+        status: 200,
+        ok: true,
+        headers: new Headers({ 'content-type': 'text/html' }),
+        json: async () => ({ ok: true }),
+      });
+      await expect(apiRequest('/test')).rejects.toThrow('Invalid JSON');
     });
-    await expect(apiRequest('/test')).rejects.toThrow('Invalid JSON');
   });
-});

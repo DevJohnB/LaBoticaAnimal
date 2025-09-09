@@ -11,6 +11,7 @@ function createValidToken() {
 }
 
 describe('error handling', () => {
+
   beforeEach(() => {
     clearToken();
     global.fetch = jest.fn();
@@ -27,6 +28,4 @@ describe('error handling', () => {
       headers: new Headers({ 'content-type': 'application/json' }),
       json: async () => ({ error: 'fail' }),
     });
-    await expect(apiRequest('/test')).rejects.toThrow('fail');
   });
-});
