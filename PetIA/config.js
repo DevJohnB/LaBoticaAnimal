@@ -1,5 +1,8 @@
 // Application configuration
-const apiBaseUrl = (typeof window !== 'undefined' && window.API_BASE_URL) || process.env.API_BASE_URL || "https://laboticaanimal.com";
+const apiBaseUrl =
+  process.env.API_BASE_URL ||
+  globalThis.API_BASE_URL ||
+  "https://laboticaanimal.com";
 
 export default {
   apiBaseUrl,
