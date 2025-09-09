@@ -9,7 +9,10 @@ function createToken(expSeconds) {
 
 describe('token utilities', () => {
   beforeEach(() => {
+
     document.cookie = '';
+
+
     global.fetch = jest.fn().mockResolvedValue({ ok: true });
   });
 

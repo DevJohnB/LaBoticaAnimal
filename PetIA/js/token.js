@@ -8,6 +8,7 @@ function parseToken(token) {
   }
 }
 
+
 function setCookie(name, value, exp) {
   let cookie = `${name}=${value}; path=/; SameSite=Lax;`;
   if (exp) {
@@ -37,6 +38,7 @@ export function getToken() {
   if (!token) return null;
   const payload = parseToken(token);
   if (!payload || !payload.exp || Date.now() >= payload.exp * 1000) {
+
     clearToken();
     return null;
   }
@@ -54,4 +56,5 @@ export async function fetchWithAuth(url, options = {}) {
     ? { ...baseHeaders, Authorization: `Bearer ${token}` }
     : { ...baseHeaders };
   return fetch(url, { ...options, headers, credentials: 'include' });
+
 }

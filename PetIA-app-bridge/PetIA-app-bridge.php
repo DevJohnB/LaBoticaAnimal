@@ -130,7 +130,7 @@ class PetIA_App_Bridge {
             $allowed = $this->is_origin_allowed( $origin );
 
             if ( $origin && $allowed ) {
-                $this->send_cors_headers( $origin );
+              $this->send_cors_headers( $origin );
             }
 
             if ( 'OPTIONS' === $_SERVER['REQUEST_METHOD'] ) {
@@ -169,6 +169,28 @@ class PetIA_App_Bridge {
         header( 'Access-Control-Allow-Methods: GET, POST, OPTIONS' );
         header( 'Access-Control-Allow-Headers: Authorization, Content-Type' );
         header( 'Access-Control-Allow-Credentials: true' );
+    }
+
+    protected function get_secret_key() {
+        if ( ! defined( 'AUTH_KEY' ) || empty( AUTH_KEY ) || 'change_this_secret_key' === AUTH_KEY ) {
+            wp_die( __( 'AUTH_KEY must be defined in wp-config.php.', 'petia-app-bridge' ) );
+
+        return AUTH_KEY;
+    }
+
+    protected function get_request_origin() {
+        $origin = '';
+        if ( ! empty( $_SERVER['HTTP_ORIGIN'] ) ) {
+            $origin = trim( $_SERVER['HTTP_ORIGIN'] );
+        } elseif ( ! empty( $_SERVER['HTTP_X_FORWARDED_ORIGIN'] ) ) {
+            $origin = trim( $_SERVER['HTTP_X_FORWARDED_ORIGIN'] );
+        }
+        return $origin;
+    }
+
+    protected function is_origin_allowed( $origin ) {
+        $allowed = defined( 'PETIA_ALLOWED_ORIGINS' ) ? array_map( 'trim', explode( ',', PETIA_ALLOWED_ORIGINS ) ) : [ get_site_url() ];
+        return in_array( $origin, $allowed, true );
     }
 
     protected function get_secret_key() {
