@@ -1,6 +1,7 @@
 import config from '../config.js';
 import { setToken, getToken, clearToken } from './token.js';
 import { apiRequest } from './api.js';
+import { handleError } from './error.js';
 
 async function login(email, password) {
   const data = await apiRequest(config.endpoints.login, {
@@ -25,7 +26,7 @@ export async function logout() {
     try {
       await apiRequest(config.endpoints.logout, { method: 'POST' });
     } catch (err) {
-      console.error('Logout error', err);
+      handleError(err, 'Logout error');
     }
   }
   clearToken();
@@ -58,7 +59,7 @@ if (loginForm) {
       await login(email, password);
       window.location.href = 'user.html';
     } catch (err) {
-      alert('Login error');
+      handleError(err, 'Login error');
     }
   });
 }
@@ -70,9 +71,9 @@ if (recoverForm) {
     const email = document.getElementById('email').value;
     try {
       await requestPasswordReset(email);
-      alert('Solicitud enviada');
+      console.log('Solicitud enviada');
     } catch (err) {
-      alert('Error');
+      handleError(err, 'Error');
     }
   });
 }

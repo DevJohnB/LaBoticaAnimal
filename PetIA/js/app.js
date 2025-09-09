@@ -1,6 +1,7 @@
 import config from '../config.js';
 import { logout, validateToken } from './auth.js';
 import { fetchWithAuth, getToken } from './token.js';
+import { handleError } from './error.js';
 
 async function getProfile() {
   const valid = await validateToken();
@@ -72,10 +73,10 @@ async function updateProfile(e) {
   });
 
   if (res.ok) {
-    alert('Datos actualizados');
+    console.log('Datos actualizados');
     getProfile();
   } else {
-    alert('Error al actualizar');
+    handleError(new Error('Error al actualizar'));
   }
 }
 
