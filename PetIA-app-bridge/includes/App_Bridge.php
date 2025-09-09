@@ -8,6 +8,7 @@ class App_Bridge {
         $this->token_manager = new Token_Manager();
         add_action( 'rest_api_init', [ $this, 'register_routes' ] );
         add_filter( 'rest_authentication_errors', [ $this, 'authenticate_requests' ] );
+        add_filter( 'rest_pre_serve_request', [ $this, 'send_cors_headers' ], 15, 3 );
 
         if ( is_admin() ) {
             new Admin();
@@ -27,6 +28,11 @@ class App_Bridge {
         ) $charset;";
         require_once ABSPATH . 'wp-admin/includes/upgrade.php';
         dbDelta( $sql );
+    }
+
+    public function send_cors_headers( $served, $result, $request ) {
+        header( 'Access-Control-Expose-Headers: Authorization' );
+        return $served;
     }
 
     public function authenticate_requests( $result ) {
