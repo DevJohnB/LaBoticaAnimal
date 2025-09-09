@@ -3,6 +3,13 @@ import { apiRequest } from '../PetIA/js/api.js';
 import { setToken, getToken, clearToken } from '../PetIA/js/token.js';
 import 'whatwg-fetch';
 
+function createValidToken() {
+  const payload = Buffer.from(
+    JSON.stringify({ exp: Math.floor(Date.now() / 1000) + 3600 })
+  ).toString('base64');
+  return `aa.${payload}.bb`;
+}
+
 describe('apiRequest', () => {
   beforeEach(() => {
     clearToken();
@@ -10,7 +17,8 @@ describe('apiRequest', () => {
   });
 
   test('adds Authorization header', async () => {
-    setToken('abc');
+    const token = createValidToken();
+    setToken(token);
     global.fetch.mockResolvedValue({
       status: 200,
       headers: new Headers({ 'content-type': 'application/json' }),
@@ -18,11 +26,11 @@ describe('apiRequest', () => {
     });
     await apiRequest('/test');
     const headers = global.fetch.mock.calls[0][1].headers;
-    expect(headers.get('Authorization')).toBe('Bearer abc');
+    expect(headers.get('Authorization')).toBe(`Bearer ${token}`);
   });
 
   test('clears token and redirects on 401', async () => {
-    setToken('abc');
+    setToken(createValidToken());
     delete window.location;
     window.location = { href: '' };
     global.fetch.mockResolvedValue({
