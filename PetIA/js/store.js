@@ -1,5 +1,6 @@
 import config from '../config.js';
 import { apiRequest } from './api.js';
+import { addItem } from './cart.js';
 
 const loadedCategories = new Map();
 let allCategories = [];
@@ -28,7 +29,13 @@ function renderProducts(products, panel) {
       <img src="${p.image}" alt="${p.name}" />
       <div class="name">${p.name}</div>
       <div class="price">${p.price}</div>
+      <button class="add-cart">Añadir</button>
     `;
+    const btn = li.querySelector('.add-cart');
+    btn.addEventListener('click', async () => {
+      await addItem(p.id, 1);
+      alert('Producto agregado');
+    });
     list.appendChild(li);
   });
 }
