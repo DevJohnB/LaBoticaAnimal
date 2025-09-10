@@ -48,8 +48,8 @@ export async function fetchWithAuth(input, options = {}) {
   }
   const headers = new Headers(options.headers || {});
   headers.set('Authorization', `Bearer ${token}`);
-  // Consumers can supply `credentials` in options when cookies are needed
-  return fetch(input, { ...options, headers });
+  // Include credentials by default but allow consumers to override via `options`
+  return fetch(input, { credentials: 'include', ...options, headers });
 }
 
 export function ensureAuth() {
