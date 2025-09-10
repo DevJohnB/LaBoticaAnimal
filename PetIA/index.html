@@ -16,6 +16,7 @@
   <script type="module">
     import config from './config.js';
     import { setToken } from './js/token.js';
+    import { syncLocalCart, getCart, getCartKey } from './js/cart.js';
     const form = document.getElementById('loginForm');
     form.addEventListener('submit', async e => {
       e.preventDefault();
@@ -27,6 +28,19 @@
       const token = res.headers.get('Authorization')?.split(' ')[1];
       if (token) {
         setToken(token);
+        await syncLocalCart();
+        if (
+          typeof localStorage !== 'undefined' &&
+          localStorage.getItem('restoreCart') &&
+          getCartKey()
+        ) {
+          try {
+            await getCart();
+          } catch (err) {
+            console.error('Error restoring cart', err);
+          }
+          localStorage.removeItem('restoreCart');
+        }
         location.href = 'chat.html';
       }
     });

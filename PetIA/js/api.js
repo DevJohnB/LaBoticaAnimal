@@ -4,6 +4,9 @@ import { getToken, clearToken, fetchWithAuth, isTokenExpired } from './token.js'
 export async function apiRequest(endpoint, options = {}) {
   const token = getToken();
   if (token && isTokenExpired(token)) {
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem('restoreCart', '1');
+    }
     clearToken();
     window.location.href = 'index.html';
     throw new Error('Token expired');
@@ -19,6 +22,9 @@ export async function apiRequest(endpoint, options = {}) {
     throw new Error('Network error');
   }
   if (response.status === 401 || response.status === 403) {
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem('restoreCart', '1');
+    }
     clearToken();
     window.location.href = 'index.html';
     throw new Error('Unauthorized');

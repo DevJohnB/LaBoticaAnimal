@@ -14,6 +14,7 @@ describe('apiRequest', () => {
   beforeEach(() => {
     clearToken();
     global.fetch = jest.fn();
+    localStorage.clear();
   });
 
   test('adds Authorization header', async () => {
@@ -43,6 +44,7 @@ describe('apiRequest', () => {
     await expect(apiRequest('/test')).rejects.toThrow('Unauthorized');
     expect(getToken()).toBe('');
     expect(window.location.href).toBe('index.html');
+    expect(localStorage.getItem('restoreCart')).toBe('1');
   });
 
   test('401 without token redirects', async () => {
@@ -56,6 +58,7 @@ describe('apiRequest', () => {
     });
     await expect(apiRequest('/test')).rejects.toThrow('Unauthorized');
     expect(window.location.href).toBe('index.html');
+    expect(localStorage.getItem('restoreCart')).toBe('1');
   });
 
   test('throws Network error on fetch failure', async () => {
