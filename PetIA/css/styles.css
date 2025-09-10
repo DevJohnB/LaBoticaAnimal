@@ -16,6 +16,16 @@ h1 {
   text-align: center;
 }
 
+nav {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+nav a {
+  text-decoration: none;
+}
+
 /* Form layout */
 form {
   display: flex;
