@@ -50,23 +50,18 @@ describe('apiRequest', () => {
   test('401 without token redirects', async () => {
     delete window.location;
     window.location = { href: '' };
-    global.fetch.mockResolvedValue({
-      status: 401,
-      ok: false,
-      headers: new Headers({ 'content-type': 'application/json' }),
-      json: async () => ({ message: 'Unauthorized' }),
-    });
-    await expect(apiRequest('/test')).rejects.toThrow('Unauthorized');
-    expect(window.location.href).toBe('index.html');
-    expect(localStorage.getItem('restoreCart')).toBe('1');
+    await expect(apiRequest('/test')).rejects.toThrow('Missing authentication token');
+    expect(global.fetch).not.toHaveBeenCalled();
   });
 
   test('throws Network error on fetch failure', async () => {
+    setToken(createValidToken());
     global.fetch.mockRejectedValue(new Error('failed'));
     await expect(apiRequest('/test')).rejects.toThrow('Network error');
   });
 
   test('throws on boolean false response', async () => {
+    setToken(createValidToken());
     global.fetch.mockResolvedValue({
       status: 200,
       ok: true,
@@ -77,6 +72,7 @@ describe('apiRequest', () => {
   });
 
   test('throws on non JSON response', async () => {
+    setToken(createValidToken());
     global.fetch.mockResolvedValue({
       status: 200,
       ok: true,

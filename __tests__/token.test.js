@@ -32,12 +32,19 @@ describe('fetchWithAuth', () => {
     global.fetch = jest.fn().mockResolvedValue({ ok: true });
   });
 
+  test('throws when token is missing', async () => {
+    await expect(fetchWithAuth('/test')).rejects.toThrow('Missing token');
+    expect(global.fetch).not.toHaveBeenCalled();
+  });
+
   test('does not set credentials by default', async () => {
+    setToken('abc');
     await fetchWithAuth('/test');
     expect(global.fetch.mock.calls[0][1].credentials).toBeUndefined();
   });
 
   test('respects credentials option when provided', async () => {
+    setToken('abc');
     await fetchWithAuth('/test', { credentials: 'include' });
     expect(global.fetch.mock.calls[0][1].credentials).toBe('include');
   });

@@ -28,10 +28,11 @@ export function clearToken() {
 
 export async function fetchWithAuth(input, options = {}) {
   const token = getToken();
-  const headers = new Headers(options.headers || {});
-  if (token) {
-    headers.set('Authorization', `Bearer ${token}`);
+  if (!token) {
+    throw new Error('Missing token');
   }
+  const headers = new Headers(options.headers || {});
+  headers.set('Authorization', `Bearer ${token}`);
   // Consumers can supply `credentials` in options when cookies are needed
   return fetch(input, { ...options, headers });
 }
