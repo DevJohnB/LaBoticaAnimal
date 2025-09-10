@@ -1,0 +1,48 @@
+/* Base styles */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  padding: 1rem;
+  line-height: 1.4;
+}
+
+h1 {
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+/* Form layout */
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+input,
+button {
+  padding: 0.5rem;
+  font-size: 1rem;
+}
+
+ul {
+  list-style: none;
+  padding: 0;
+}
+
+/* Responsive adjustments */
+@media (min-width: 600px) {
+  body {
+    padding: 2rem 4rem;
+  }
+
+  form {
+    max-width: 500px;
+  }
+}
