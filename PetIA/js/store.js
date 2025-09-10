@@ -1,19 +1,19 @@
 import config from '../config.js';
 import { apiRequest } from './api.js';
 
-const productsCache = new Map();
+const loadedCategories = new Map();
 let allCategories = [];
 
 async function loadCategoryProducts(categoryId) {
   const panel = document.getElementById(`panel-${categoryId}`);
   if (!panel) return;
-  if (productsCache.has(categoryId)) {
-    renderProducts(productsCache.get(categoryId), panel);
+  if (loadedCategories.has(categoryId)) {
+    renderProducts(loadedCategories.get(categoryId), panel);
     return;
   }
   panel.innerHTML = '<p>Cargando...</p>';
   const products = await apiRequest(`${config.endpoints.products}?category=${categoryId}`);
-  productsCache.set(categoryId, products);
+  loadedCategories.set(categoryId, products);
   renderProducts(products, panel);
 }
 
@@ -31,6 +31,15 @@ function renderProducts(products, panel) {
     `;
     list.appendChild(li);
   });
+}
+
+function setActiveTab(tab, panel, tabsContainer, contentContainer) {
+  tabsContainer.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  contentContainer
+    .querySelectorAll('.tab-panel')
+    .forEach(p => p.classList.remove('active'));
+  tab.classList.add('active');
+  panel.classList.add('active');
 }
 
 function renderCategories(categories) {
@@ -52,15 +61,29 @@ function renderCategories(categories) {
       content.appendChild(panel);
 
       tab.addEventListener('click', () => {
-        tabs.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-        content.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-        tab.classList.add('active');
-        panel.classList.add('active');
+        setActiveTab(tab, panel, tabs, content);
+        // Remove active from any subcategory tab
+        document
+          .querySelectorAll('#category-content .tab')
+          .forEach(t => t.classList.remove('active'));
+        if (typeof localStorage !== 'undefined') {
+          localStorage.setItem('activeCategory', cat.id);
+        }
         renderSubcategories(cat.id);
       });
     });
-  const first = tabs.querySelector('.tab');
-  if (first) first.click();
+
+  const saved =
+    typeof localStorage !== 'undefined' && localStorage.getItem('activeCategory');
+  let toActivate = null;
+  if (saved) {
+    const cat = allCategories.find(c => String(c.id) === saved);
+    if (cat) {
+      const rootId = cat.parent || cat.id;
+      toActivate = tabs.querySelector(`.tab[data-id="${rootId}"]`);
+    }
+  }
+  (toActivate || tabs.querySelector('.tab'))?.click();
 }
 
 function renderSubcategories(parentId) {
@@ -68,9 +91,7 @@ function renderSubcategories(parentId) {
   if (!panel || panel.dataset.subRendered) return;
   const subs = allCategories.filter(c => c.parent === parentId);
   if (subs.length === 0) {
-    if (!productsCache.has(parentId)) {
-      loadCategoryProducts(parentId);
-    }
+    loadCategoryProducts(parentId);
     panel.dataset.subRendered = 'true';
     return;
   }
@@ -92,17 +113,19 @@ function renderSubcategories(parentId) {
     content.appendChild(subPanel);
 
     tab.addEventListener('click', () => {
-      tabs.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-      content.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-      tab.classList.add('active');
-      subPanel.classList.add('active');
-      if (!productsCache.has(sub.id)) {
-        loadCategoryProducts(sub.id);
+      setActiveTab(tab, subPanel, tabs, content);
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem('activeCategory', sub.id);
       }
+      loadCategoryProducts(sub.id);
     });
   });
-  const first = tabs.querySelector('.tab');
-  if (first) first.click();
+  const saved =
+    typeof localStorage !== 'undefined' && localStorage.getItem('activeCategory');
+  const toActivate = saved
+    ? tabs.querySelector(`.tab[data-id="${saved}"]`)
+    : null;
+  (toActivate || tabs.querySelector('.tab'))?.click();
   panel.dataset.subRendered = 'true';
 }
 
