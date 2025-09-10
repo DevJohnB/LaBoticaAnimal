@@ -12,23 +12,29 @@ export async function apiRequest(endpoint, options = {}) {
   if (!/^https?:/i.test(endpoint)) {
     url = config.apiBaseUrl.replace(/\/$/, '') + endpoint;
   }
-  const response = await fetchWithAuth(url, options);
-  const contentType = response.headers.get('content-type') || '';
-  if (!response.ok) {
-    let errorData = {};
-    if (contentType.includes('application/json')) {
-      errorData = await response.json();
-    }
-    if ((response.status === 401 || response.status === 403) && getToken()) {
-      clearToken();
-      window.location.href = 'index.html';
-    }
-    throw new Error(errorData.message || response.statusText);
+  let response;
+  try {
+    response = await fetchWithAuth(url, options);
+  } catch (e) {
+    throw new Error('Network error');
   }
+  if (response.status === 401 || response.status === 403) {
+    clearToken();
+    window.location.href = 'index.html';
+    throw new Error('Unauthorized');
+  }
+  if (!response.ok) {
+    const message = response.status >= 500 ? 'Server error' : 'Unexpected response';
+    throw new Error(message);
+  }
+  const contentType = response.headers.get('content-type') || '';
   if (!contentType.includes('application/json')) {
     throw new Error('Invalid JSON response');
   }
   const data = await response.json();
+  if (data === false) {
+    throw new Error('Respuesta no válida del servidor');
+  }
   if (data && data.error) {
     throw new Error(data.error);
   }
