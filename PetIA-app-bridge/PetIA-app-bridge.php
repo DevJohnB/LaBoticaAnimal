@@ -23,7 +23,6 @@ require_once __DIR__ . '/vendor/autoload.php';
  */
 function labotica_rest_cors( $served = false, $result = null, $request = null ) {
     $origin          = isset( $_SERVER['HTTP_ORIGIN'] ) ? $_SERVER['HTTP_ORIGIN'] : '';
-
     $allowed_origins = (array) get_option(
         'petia_app_bridge_allowed_origins',
         [

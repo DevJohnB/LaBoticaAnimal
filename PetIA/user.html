@@ -11,16 +11,31 @@
     <a href="chat.html">Chat</a>
     <a href="store.html">Store</a>
     <a href="user.html">Profile</a>
+    <a href="#" id="logout-link">Logout</a>
   </nav>
   <h1>User Profile</h1>
   <div id="profile"></div>
+  <script type="module" src="./js/logout.js"></script>
   <script type="module">
     import config from './config.js';
     import { apiRequest } from './js/api.js';
+
     async function load() {
-      const data = await apiRequest(config.endpoints.profile);
-      document.getElementById('profile').textContent = JSON.stringify(data);
+      try {
+        const data = await apiRequest(config.endpoints.profile);
+        const profile = document.getElementById('profile');
+        profile.innerHTML = `
+          <p><strong>Usuario:</strong> ${data.username}</p>
+          <p><strong>Nombre:</strong> ${data.first_name}</p>
+          <p><strong>Apellido:</strong> ${data.last_name}</p>
+          <p><strong>Nombre a mostrar:</strong> ${data.display_name}</p>
+          <p><strong>Email:</strong> ${data.email}</p>
+        `;
+      } catch (error) {
+        document.getElementById('profile').textContent = 'Error cargando perfil';
+      }
     }
+
     load();
   </script>
 </body>

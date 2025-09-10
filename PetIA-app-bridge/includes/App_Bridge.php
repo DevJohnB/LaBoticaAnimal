@@ -31,7 +31,6 @@ class App_Bridge {
             'petia_app_bridge_allowed_origins',
             [ 'http://localhost', 'http://localhost:3000' ]
         );
-
     }
 
     public function authenticate_requests( $result ) {
@@ -249,9 +248,11 @@ class App_Bridge {
         $user = wp_get_current_user();
         return [
             'id'         => $user->ID,
-            'email'      => $user->user_email,
-            'first_name' => $user->first_name,
-            'last_name'  => $user->last_name,
+            'username'    => $user->user_login,
+            'display_name'=> $user->display_name,
+            'email'       => $user->user_email,
+            'first_name'  => $user->first_name,
+            'last_name'   => $user->last_name,
         ];
     }
 
