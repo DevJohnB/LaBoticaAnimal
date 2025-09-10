@@ -275,7 +275,7 @@ class App_Bridge {
                 return new \WP_Error( 'forbidden', 'User not allowed', [ 'status' => 403 ] );
             }
 
-            return [ 'valid' => true, 'user_id' => $user_id ];
+            return [ 'valid' => true, 'user_id' => (int) $user->ID ];
         } catch ( \Exception $e ) {
             return new \WP_Error( 'invalid_token', $e->getMessage(), [ 'status' => 401 ] );
         }
