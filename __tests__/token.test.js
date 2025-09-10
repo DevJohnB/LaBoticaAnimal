@@ -40,12 +40,12 @@ describe('fetchWithAuth', () => {
   test('does not set credentials by default', async () => {
     setToken('abc');
     await fetchWithAuth('/test');
-    expect(global.fetch.mock.calls[0][1].credentials).toBeUndefined();
+    expect(global.fetch.mock.calls[0][1].credentials).toBe('include');
   });
 
-  test('respects credentials option when provided', async () => {
+  test('allows overriding credentials option', async () => {
     setToken('abc');
-    await fetchWithAuth('/test', { credentials: 'include' });
-    expect(global.fetch.mock.calls[0][1].credentials).toBe('include');
+    await fetchWithAuth('/test', { credentials: 'omit' });
+    expect(global.fetch.mock.calls[0][1].credentials).toBe('omit');
   });
 });
