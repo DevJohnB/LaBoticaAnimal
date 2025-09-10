@@ -45,7 +45,7 @@ describe('apiRequest', () => {
     expect(window.location.href).toBe('index.html');
   });
 
-  test('401 without token does not redirect', async () => {
+  test('401 without token redirects', async () => {
     delete window.location;
     window.location = { href: '' };
     global.fetch.mockResolvedValue({
@@ -55,7 +55,22 @@ describe('apiRequest', () => {
       json: async () => ({ message: 'Unauthorized' }),
     });
     await expect(apiRequest('/test')).rejects.toThrow('Unauthorized');
-    expect(window.location.href).toBe('');
+    expect(window.location.href).toBe('index.html');
+  });
+
+  test('throws Network error on fetch failure', async () => {
+    global.fetch.mockRejectedValue(new Error('failed'));
+    await expect(apiRequest('/test')).rejects.toThrow('Network error');
+  });
+
+  test('throws on boolean false response', async () => {
+    global.fetch.mockResolvedValue({
+      status: 200,
+      ok: true,
+      headers: new Headers({ 'content-type': 'application/json' }),
+      json: async () => false,
+    });
+    await expect(apiRequest('/test')).rejects.toThrow('Respuesta no válida del servidor');
   });
 
   test('throws on non JSON response', async () => {
