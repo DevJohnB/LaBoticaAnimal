@@ -14,21 +14,8 @@
     <a href="#" id="logout-link">Logout</a>
   </nav>
   <h1>Store</h1>
-  <ul id="products"></ul>
+  <div id="categories"></div>
   <script type="module" src="./js/logout.js"></script>
-  <script type="module">
-    import config from './config.js';
-    import { apiRequest } from './js/api.js';
-    async function load() {
-      const data = await apiRequest(config.endpoints.products);
-      const list = document.getElementById('products');
-      data.forEach(p => {
-        const li = document.createElement('li');
-        li.textContent = `${p.name} - ${p.price}`;
-        list.appendChild(li);
-      });
-    }
-    load();
-  </script>
+  <script type="module" src="./js/store.js"></script>
 </body>
 </html>

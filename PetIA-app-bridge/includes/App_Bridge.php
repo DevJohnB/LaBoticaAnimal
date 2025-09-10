@@ -329,13 +329,26 @@ class App_Bridge {
         if ( ! function_exists( 'wc_get_products' ) ) {
             return [];
         }
-        $products = wc_get_products( [ 'limit' => 10 ] );
-        $data = [];
+        $args = [ 'limit' => -1 ];
+        $category = $request->get_param( 'category' );
+        if ( $category ) {
+            $args['tax_query'] = [
+                [
+                    'taxonomy' => 'product_cat',
+                    'field'    => 'term_id',
+                    'terms'    => array_map( 'intval', (array) $category ),
+                ],
+            ];
+        }
+        $products = wc_get_products( $args );
+        $data     = [];
         foreach ( $products as $product ) {
+            $image_id  = $product->get_image_id();
             $data[] = [
                 'id'    => $product->get_id(),
                 'name'  => $product->get_name(),
                 'price' => $product->get_price(),
+                'image' => $image_id ? wp_get_attachment_url( $image_id ) : '',
             ];
         }
         return $data;
