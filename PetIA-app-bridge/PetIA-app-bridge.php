@@ -22,7 +22,7 @@ require_once __DIR__ . '/vendor/autoload.php';
  * @return bool The original $served value.
  */
 function labotica_rest_cors( $served = false, $result = null, $request = null ) {
-    $origin          = isset( $_SERVER['HTTP_ORIGIN'] ) ? $_SERVER['HTTP_ORIGIN'] : '';
+    $origin          = get_http_origin();
     $allowed_origins = (array) get_option(
         'petia_app_bridge_allowed_origins',
         [
@@ -31,7 +31,9 @@ function labotica_rest_cors( $served = false, $result = null, $request = null ) 
         ]
     );
 
-    if ( $origin && in_array( $origin, $allowed_origins, true ) ) {
+    header( 'Vary: Origin' );
+
+    if ( $origin && ( in_array( '*', $allowed_origins, true ) || in_array( $origin, $allowed_origins, true ) ) ) {
         header( 'Access-Control-Allow-Origin: ' . $origin );
     }
 
