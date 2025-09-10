@@ -27,6 +27,11 @@ class App_Bridge {
         ) $charset;";
         require_once ABSPATH . 'wp-admin/includes/upgrade.php';
         dbDelta( $sql );
+        add_option(
+            'petia_app_bridge_allowed_origins',
+            [ 'http://localhost', 'http://localhost:3000' ]
+        );
+
     }
 
     public function authenticate_requests( $result ) {
