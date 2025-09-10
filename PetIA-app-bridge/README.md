@@ -5,7 +5,7 @@ Plugin de WordPress que expone endpoints REST para ser consumidos por la aplicac
 ## Características
 - Autenticación mediante tokens JWT con expiración de 24 h y revocación.
 - Endpoints de registro, inicio de sesión, perfil, productos, pedidos y más bajo `/wp-json/petia-app-bridge/v1/`.
-- Proxy genérico para WooCommerce.
+- Proxy genérico para WooCommerce y Store API.
 - Manejo de CORS configurable mediante la opción `petia_app_bridge_allowed_origins` (admite `*` como comodín).
 - Panel de administración "PetIA Bridge" con pestañas para control de acceso y ejecución de pruebas Node.
 
@@ -33,3 +33,4 @@ Las dependencias PHP necesarias ya están incluidas, por lo que no es necesario 
 - `GET /wp-json/petia-app-bridge/v1/products`
 - `GET /wp-json/petia-app-bridge/v1/brands`
 - `* /wp-json/petia-app-bridge/v1/wc/<endpoint>` (proxy WooCommerce)
+- `* /wp-json/petia-app-bridge/v1/wc-store/<endpoint>` (proxy WooCommerce Store API)
