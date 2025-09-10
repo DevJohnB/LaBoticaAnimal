@@ -19,6 +19,9 @@ export async function apiRequest(endpoint, { redirectOnAuthError = true, ...opti
   try {
     response = await fetchWithAuth(url, options);
   } catch (e) {
+    if (e.message === 'Missing token') {
+      throw new Error('Missing authentication token');
+    }
     throw new Error('Network error');
   }
   if (response.status === 401 || response.status === 403) {
