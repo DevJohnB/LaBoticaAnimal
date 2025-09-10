@@ -32,11 +32,16 @@
           <p><strong>Email:</strong> ${data.email}</p>
         `;
       } catch (error) {
-        const profile = document.getElementById('profile');
-        profile.innerHTML = '<p>No se pudo cargar el perfil. Por favor inicia sesión.</p>';
-        setTimeout(() => {
-          window.location.href = 'index.html';
-        }, 2000);
+        console.error('Perfil:', error);
+        let message;
+        if (/network|fetch/i.test(error.message)) {
+          message = 'Error de red al cargar el perfil';
+        } else if (/token|unauthorized|forbidden|auth/i.test(error.message)) {
+          message = 'Error de autenticación. Inicia sesión nuevamente.';
+        } else {
+          message = 'Respuesta inesperada del servidor.';
+        }
+        document.getElementById('profile').textContent = message;
       }
     }
 
