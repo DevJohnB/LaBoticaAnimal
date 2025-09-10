@@ -42,6 +42,13 @@ class Token_Manager {
             $header = trim( $_SERVER['Authorization'] );
         } elseif ( isset( $_SERVER['HTTP_AUTHORIZATION'] ) ) {
             $header = trim( $_SERVER['HTTP_AUTHORIZATION'] );
+        } elseif ( isset( $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] ) ) {
+            $header = trim( $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] );
+        } elseif ( function_exists( 'apache_request_headers' ) ) {
+            $request_headers = apache_request_headers();
+            if ( isset( $request_headers['Authorization'] ) ) {
+                $header = trim( $request_headers['Authorization'] );
+            }
         }
         if ( $header && preg_match( '/Bearer\s+(.*)/', $header, $matches ) ) {
             return $matches[1];
