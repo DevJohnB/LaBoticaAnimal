@@ -31,7 +31,7 @@ describe('apiRequest', () => {
     expect(headers.get('Authorization')).toBe(`Bearer ${token}`);
   });
 
-  test('clears token without redirect on 401 by default', async () => {
+  test('clears token on invalid token 401 by default', async () => {
     setToken(createValidToken());
     delete window.location;
     window.location = { href: '' };
@@ -39,7 +39,7 @@ describe('apiRequest', () => {
       status: 401,
       ok: false,
       headers: new Headers({ 'content-type': 'application/json' }),
-      json: async () => ({ message: 'Unauthorized' }),
+      json: async () => ({ message: 'Token invalid' }),
     });
     await expect(apiRequest('/test')).rejects.toThrow('Unauthorized');
     expect(getToken()).toBe('');
@@ -47,7 +47,7 @@ describe('apiRequest', () => {
     expect(localStorage.getItem('restoreCart')).toBe('1');
   });
 
-  test('redirects on 401 when option enabled', async () => {
+  test('redirects on invalid token 401 when option enabled', async () => {
     setToken(createValidToken());
     delete window.location;
     window.location = { href: '' };
@@ -55,11 +55,28 @@ describe('apiRequest', () => {
       status: 401,
       ok: false,
       headers: new Headers({ 'content-type': 'application/json' }),
-      json: async () => ({ message: 'Unauthorized' }),
+      json: async () => ({ message: 'Token invalid' }),
     });
     await expect(apiRequest('/test', { redirectOnAuthError: true })).rejects.toThrow('Unauthorized');
     expect(getToken()).toBe('');
     expect(window.location.href).toBe('index.html');
+  });
+
+  test('does not clear token on temporary 401 error', async () => {
+    const token = createValidToken();
+    setToken(token);
+    delete window.location;
+    window.location = { href: '' };
+    global.fetch.mockResolvedValue({
+      status: 401,
+      ok: false,
+      headers: new Headers({ 'content-type': 'application/json' }),
+      json: async () => ({ message: 'Service unavailable' }),
+    });
+    await expect(apiRequest('/test')).rejects.toThrow('Authorization failed. Please retry.');
+    expect(getToken()).toBe(token);
+    expect(window.location.href).toBe('');
+    expect(localStorage.getItem('restoreCart')).toBeNull();
   });
 
   test('missing token prevents fetch', async () => {
