@@ -19,10 +19,12 @@
   <script type="module">
     import config from './config.js';
     import { apiRequest } from './js/api.js';
+    import { ensureAuth } from './js/token.js';
 
-    async function load() {
-      try {
-        const data = await apiRequest(config.endpoints.profile, { redirectOnAuthError: false });
+    if (ensureAuth()) {
+      async function load() {
+        try {
+          const data = await apiRequest(config.endpoints.profile);
         const profile = document.getElementById('profile');
         profile.innerHTML = `
           <p><strong>Usuario:</strong> ${data.username}</p>
@@ -43,9 +45,10 @@
         }
         document.getElementById('profile').textContent = message;
       }
-    }
+      }
 
-    load();
+      load();
+    }
   </script>
 </body>
 </html>

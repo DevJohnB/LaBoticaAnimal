@@ -14,15 +14,30 @@ export function isTokenExpired(token) {
 
 export function setToken(token) {
   sessionStorage.setItem('token', token);
+  if (typeof localStorage !== 'undefined') {
+    localStorage.setItem('token', token);
+  }
+  document.cookie = `token=${token}; path=/;`;
 }
 
 export function getToken() {
-  return sessionStorage.getItem('token') || '';
+  let token = sessionStorage.getItem('token');
+  if (!token && typeof localStorage !== 'undefined') {
+    token = localStorage.getItem('token');
+  }
+  if (!token) {
+    const match = document.cookie.match(/(?:^|; )token=([^;]+)/);
+    token = match ? decodeURIComponent(match[1]) : '';
+  }
+  return token || '';
 }
 
 export function clearToken() {
   sessionStorage.removeItem('token');
-  // Remove legacy cookie if present
+  if (typeof localStorage !== 'undefined') {
+    localStorage.removeItem('token');
+  }
+  // Remove cookie if present
   document.cookie = 'token=; Max-Age=0; path=/;';
 }
 
@@ -35,4 +50,16 @@ export async function fetchWithAuth(input, options = {}) {
   headers.set('Authorization', `Bearer ${token}`);
   // Consumers can supply `credentials` in options when cookies are needed
   return fetch(input, { ...options, headers });
+}
+
+export function ensureAuth() {
+  const token = getToken();
+  if (!token) {
+    console.warn('Missing authentication token; redirecting to login');
+    if (typeof window !== 'undefined') {
+      window.location.href = 'index.html';
+    }
+    return false;
+  }
+  return true;
 }

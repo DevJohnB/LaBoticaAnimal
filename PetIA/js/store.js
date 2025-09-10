@@ -1,6 +1,9 @@
 import config from '../config.js';
 import { apiRequest } from './api.js';
 import { addItem } from './cart.js';
+import { ensureAuth } from './token.js';
+
+ensureAuth();
 
 const loadedCategories = new Map();
 let allCategories = [];
