@@ -371,7 +371,15 @@ class App_Bridge {
             return [];
         }
         $terms = get_terms( [ 'taxonomy' => 'product_cat', 'hide_empty' => false ] );
-        return wp_list_pluck( $terms, 'name', 'term_id' );
+        $data  = array_map(
+            fn( $t ) => [
+                'id'     => $t->term_id,
+                'name'   => $t->name,
+                'parent' => $t->parent,
+            ],
+            $terms
+        );
+        return $data;
     }
 
     public function handle_products( \WP_REST_Request $request ) {
