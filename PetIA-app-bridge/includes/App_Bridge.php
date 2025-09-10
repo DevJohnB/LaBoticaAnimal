@@ -44,16 +44,20 @@ class App_Bridge {
             return $result;
         }
         try {
-            $decoded = $this->decoded_token ?: $this->token_manager->decode_token( $token );
-            if ( $this->token_manager->is_token_revoked( $decoded->jti ) ) {
+            $this->decoded_token = $this->decoded_token ?: $this->token_manager->decode_token( $token );
+            $user_id             = (int) $this->decoded_token->data->user_id;
+            if ( ! get_user_by( 'id', $user_id ) ) {
+                return new \WP_Error( 'invalid_user', 'User not found', [ 'status' => 401 ] );
+            }
+            if ( $this->token_manager->is_token_revoked( $this->decoded_token->jti ) ) {
                 return new \WP_Error( 'token_revoked', 'Token revoked', [ 'status' => 401 ] );
             }
             global $wpdb;
-            $table   = $wpdb->prefix . 'petia_app_bridge_access';
-            $access  = $wpdb->get_row(
+            $table  = $wpdb->prefix . 'petia_app_bridge_access';
+            $access = $wpdb->get_row(
                 $wpdb->prepare(
                     "SELECT allowed, start_date, end_date FROM $table WHERE user_id = %d",
-                    $decoded->data->user_id
+                    $user_id
                 )
             );
             $now = current_time( 'timestamp' );
@@ -82,7 +86,12 @@ class App_Bridge {
         }
         try {
             $this->decoded_token = $this->token_manager->decode_token( $token );
-            return (int) $this->decoded_token->data->user_id;
+            $user_id             = (int) $this->decoded_token->data->user_id;
+            if ( get_user_by( 'id', $user_id ) ) {
+                wp_set_current_user( $user_id );
+                return $user_id;
+            }
+            return 0;
         } catch ( \Exception $e ) {
             return $user_id;
         }
@@ -232,8 +241,31 @@ class App_Bridge {
             return new \WP_Error( 'no_token', 'No token provided', [ 'status' => 401 ] );
         }
         try {
-            $decoded = $this->token_manager->decode_token( $token );
-            return [ 'valid' => true, 'user_id' => $decoded->data->user_id ];
+            $decoded  = $this->token_manager->decode_token( $token );
+            $user_id  = (int) $decoded->data->user_id;
+            $user     = get_user_by( 'id', $user_id );
+            if ( ! $user ) {
+                return new \WP_Error( 'invalid_user', 'User not found', [ 'status' => 401 ] );
+            }
+            global $wpdb;
+            $table  = $wpdb->prefix . 'petia_app_bridge_access';
+            $access = $wpdb->get_row(
+                $wpdb->prepare(
+                    "SELECT allowed, start_date, end_date FROM $table WHERE user_id = %d",
+                    $user_id
+                )
+            );
+            $now = current_time( 'timestamp' );
+            if (
+                empty( $access ) ||
+                (int) $access->allowed !== 1 ||
+                ( $access->start_date && $now < strtotime( $access->start_date ) ) ||
+                ( $access->end_date && $now > strtotime( $access->end_date ) )
+            ) {
+                return new \WP_Error( 'forbidden', 'User not allowed', [ 'status' => 403 ] );
+            }
+
+            return [ 'valid' => true, 'user_id' => $user_id ];
         } catch ( \Exception $e ) {
             return new \WP_Error( 'invalid_token', $e->getMessage(), [ 'status' => 401 ] );
         }
