@@ -25,7 +25,10 @@ describe('error handling', () => {
     setToken(createValidToken());
     global.fetch.mockResolvedValue({
       status: 200,
+      ok: true,
       headers: new Headers({ 'content-type': 'application/json' }),
       json: async () => ({ error: 'fail' }),
     });
+    await expect(apiRequest('/test')).rejects.toThrow('fail');
   });
+});
