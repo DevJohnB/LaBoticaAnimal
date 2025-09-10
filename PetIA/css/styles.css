@@ -53,6 +53,29 @@ ul {
   padding: 0;
 }
 
+/* Store layout */
+#categories section {
+  margin-bottom: 2rem;
+}
+
+#categories ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+#categories li.product {
+  border: 1px solid #ccc;
+  padding: 0.5rem;
+  width: 150px;
+  text-align: center;
+}
+
+#categories li.product img {
+  max-width: 100%;
+  height: auto;
+}
+
 /* Responsive adjustments */
 @media (min-width: 600px) {
   body {
