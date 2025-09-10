@@ -1,3 +1,4 @@
+import { ensureAuth } from './token.js';
 import { getCart, updateItem, removeItem } from './cart.js';
 
 async function renderCart() {
@@ -58,6 +59,9 @@ function checkout() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+  if (!ensureAuth()) {
+    return;
+  }
   document
     .getElementById('clear-cart')
     .addEventListener('click', clearCart);
