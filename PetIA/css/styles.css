@@ -54,24 +54,45 @@ ul {
 }
 
 /* Store layout */
-#categories section {
+.tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.tab {
+  cursor: pointer;
+  padding: 0.5rem 1rem;
+}
+
+.tab.active {
+  border-bottom: 2px solid #333;
+  font-weight: bold;
+}
+
+.tab-panel {
+  display: none;
   margin-bottom: 2rem;
 }
 
-#categories ul {
+.tab-panel.active {
+  display: block;
+}
+
+.tab-panel ul {
   display: flex;
   flex-wrap: wrap;
   gap: 1rem;
 }
 
-#categories li.product {
+.tab-panel li.product {
   border: 1px solid #ccc;
   padding: 0.5rem;
   width: 150px;
   text-align: center;
 }
 
-#categories li.product img {
+.tab-panel li.product img {
   max-width: 100%;
   height: auto;
 }
