@@ -47,9 +47,11 @@ class App_Bridge {
             $this->decoded_token = $this->decoded_token ?: $this->token_manager->decode_token( $token );
             $user_id             = (int) $this->decoded_token->data->user_id;
             if ( ! get_user_by( 'id', $user_id ) ) {
+                error_log( 'App Bridge authentication failed: User not found' );
                 return new \WP_Error( 'invalid_user', 'User not found', [ 'status' => 401 ] );
             }
             if ( $this->token_manager->is_token_revoked( $this->decoded_token->jti ) ) {
+                error_log( 'App Bridge authentication failed: Token revoked' );
                 return new \WP_Error( 'token_revoked', 'Token revoked', [ 'status' => 401 ] );
             }
             global $wpdb;
@@ -67,12 +69,14 @@ class App_Bridge {
                 ( $access->start_date && $now < strtotime( $access->start_date ) ) ||
                 ( $access->end_date && $now > strtotime( $access->end_date ) )
             ) {
+                error_log( 'App Bridge authentication failed: User not allowed' );
                 return new \WP_Error( 'forbidden', 'User not allowed', [ 'status' => 403 ] );
             }
             wp_set_current_user( $user_id );
 
             return $result;
         } catch ( \Exception $e ) {
+            error_log( 'App Bridge authentication failed: ' . $e->getMessage() );
             return new \WP_Error( 'invalid_token', $e->getMessage(), [ 'status' => 401 ] );
         }
     }
