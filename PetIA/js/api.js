@@ -29,5 +29,8 @@ export async function apiRequest(endpoint, options = {}) {
     throw new Error('Invalid JSON response');
   }
   const data = await response.json();
+  if (data && data.error) {
+    throw new Error(data.error);
+  }
   return data;
 }
