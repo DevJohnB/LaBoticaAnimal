@@ -1,14 +1,22 @@
 import config from '../config.js';
 import { getToken, clearToken, fetchWithAuth, isTokenExpired } from './token.js';
 
-export async function apiRequest(endpoint, { redirectOnAuthError = true, ...options } = {}) {
+export async function apiRequest(endpoint, { redirectOnAuthError = false, ...options } = {}) {
   const token = getToken();
-  if (token && isTokenExpired(token)) {
+  if (!token) {
+    if (redirectOnAuthError) {
+      window.location.href = 'index.html';
+    }
+    throw new Error('Missing authentication token');
+  }
+  if (isTokenExpired(token)) {
     if (typeof localStorage !== 'undefined') {
       localStorage.setItem('restoreCart', '1');
     }
     clearToken();
-    window.location.href = 'index.html';
+    if (redirectOnAuthError) {
+      window.location.href = 'index.html';
+    }
     throw new Error('Token expired');
   }
   let url = endpoint;
@@ -19,9 +27,6 @@ export async function apiRequest(endpoint, { redirectOnAuthError = true, ...opti
   try {
     response = await fetchWithAuth(url, options);
   } catch (e) {
-    if (e.message === 'Missing token') {
-      throw new Error('Missing authentication token');
-    }
     throw new Error('Network error');
   }
   if (response.status === 401 || response.status === 403) {

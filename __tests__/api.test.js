@@ -31,7 +31,7 @@ describe('apiRequest', () => {
     expect(headers.get('Authorization')).toBe(`Bearer ${token}`);
   });
 
-  test('clears token and redirects on 401', async () => {
+  test('clears token without redirect on 401 by default', async () => {
     setToken(createValidToken());
     delete window.location;
     window.location = { href: '' };
@@ -43,15 +43,31 @@ describe('apiRequest', () => {
     });
     await expect(apiRequest('/test')).rejects.toThrow('Unauthorized');
     expect(getToken()).toBe('');
-    expect(window.location.href).toBe('index.html');
+    expect(window.location.href).toBe('');
     expect(localStorage.getItem('restoreCart')).toBe('1');
   });
 
-  test('401 without token redirects', async () => {
+  test('redirects on 401 when option enabled', async () => {
+    setToken(createValidToken());
+    delete window.location;
+    window.location = { href: '' };
+    global.fetch.mockResolvedValue({
+      status: 401,
+      ok: false,
+      headers: new Headers({ 'content-type': 'application/json' }),
+      json: async () => ({ message: 'Unauthorized' }),
+    });
+    await expect(apiRequest('/test', { redirectOnAuthError: true })).rejects.toThrow('Unauthorized');
+    expect(getToken()).toBe('');
+    expect(window.location.href).toBe('index.html');
+  });
+
+  test('missing token prevents fetch', async () => {
     delete window.location;
     window.location = { href: '' };
     await expect(apiRequest('/test')).rejects.toThrow('Missing authentication token');
     expect(global.fetch).not.toHaveBeenCalled();
+    expect(window.location.href).toBe('');
   });
 
   test('throws Network error on fetch failure', async () => {
