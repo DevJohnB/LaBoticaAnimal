@@ -22,7 +22,7 @@ Las dependencias PHP necesarias ya están incluidas, por lo que no es necesario 
 - `POST /wp-json/petia-app-bridge/v1/register`
 - `POST /wp-json/petia-app-bridge/v1/login`
 - `POST /wp-json/petia-app-bridge/v1/logout`
-- `GET /wp-json/petia-app-bridge/v1/validate-token`
+- `GET /wp-json/petia-app-bridge/v1/validate-token` – devuelve `{ "valid": true, "user_id": <ID> }` si el token es válido
 - `POST /wp-json/petia-app-bridge/v1/password-reset-request`
 - `POST /wp-json/petia-app-bridge/v1/password-reset`
 - `GET /wp-json/petia-app-bridge/v1/profile`
