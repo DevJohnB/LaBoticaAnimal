@@ -30,14 +30,27 @@ export async function apiRequest(endpoint, { redirectOnAuthError = false, ...opt
     throw new Error('Network error');
   }
   if (response.status === 401 || response.status === 403) {
-    if (typeof localStorage !== 'undefined') {
-      localStorage.setItem('restoreCart', '1');
+    let errorBody = {};
+    try {
+      errorBody = await response.json();
+    } catch (e) {
+      // ignore JSON parse errors
     }
-    clearToken();
-    if (redirectOnAuthError) {
-      window.location.href = 'index.html';
+    const message = errorBody.message || errorBody.error || '';
+    const code = errorBody.code || '';
+    const tokenInvalid = /token/i.test(message) || /token/i.test(code);
+    if (tokenInvalid) {
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem('restoreCart', '1');
+      }
+      clearToken();
+      if (redirectOnAuthError) {
+        window.location.href = 'index.html';
+      }
+      throw new Error('Unauthorized');
+    } else {
+      throw new Error('Authorization failed. Please retry.');
     }
-    throw new Error('Unauthorized');
   }
   if (!response.ok) {
     const message = response.status >= 500 ? 'Server error' : 'Unexpected response';
