@@ -1,7 +1,7 @@
 import config from '../config.js';
 import { getToken, clearToken, fetchWithAuth, isTokenExpired } from './token.js';
 
-export async function apiRequest(endpoint, options = {}) {
+export async function apiRequest(endpoint, { redirectOnAuthError = true, ...options } = {}) {
   const token = getToken();
   if (token && isTokenExpired(token)) {
     if (typeof localStorage !== 'undefined') {
@@ -26,7 +26,9 @@ export async function apiRequest(endpoint, options = {}) {
       localStorage.setItem('restoreCart', '1');
     }
     clearToken();
-    window.location.href = 'index.html';
+    if (redirectOnAuthError) {
+      window.location.href = 'index.html';
+    }
     throw new Error('Unauthorized');
   }
   if (!response.ok) {
