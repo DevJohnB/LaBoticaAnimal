@@ -3,9 +3,11 @@ namespace PetIA;
 
 class App_Bridge {
     private $token_manager;
+    private $decoded_token;
 
     public function __construct() {
         $this->token_manager = new Token_Manager();
+        add_filter( 'determine_current_user', [ $this, 'determine_current_user' ], 20 );
         add_action( 'rest_api_init', [ $this, 'register_routes' ] );
         add_filter( 'rest_authentication_errors', [ $this, 'authenticate_requests' ] );
 
@@ -42,7 +44,7 @@ class App_Bridge {
             return $result;
         }
         try {
-            $decoded = $this->token_manager->decode_token( $token );
+            $decoded = $this->decoded_token ?: $this->token_manager->decode_token( $token );
             if ( $this->token_manager->is_token_revoked( $decoded->jti ) ) {
                 return new \WP_Error( 'token_revoked', 'Token revoked', [ 'status' => 401 ] );
             }
@@ -64,10 +66,25 @@ class App_Bridge {
                 return new \WP_Error( 'forbidden', 'User not allowed', [ 'status' => 403 ] );
             }
 
-            wp_set_current_user( $decoded->data->user_id );
             return $result;
         } catch ( \Exception $e ) {
             return new \WP_Error( 'invalid_token', $e->getMessage(), [ 'status' => 401 ] );
+        }
+    }
+
+    public function determine_current_user( $user_id ) {
+        if ( $user_id ) {
+            return $user_id;
+        }
+        $token = $this->token_manager->get_authorization_header();
+        if ( ! $token ) {
+            return $user_id;
+        }
+        try {
+            $this->decoded_token = $this->token_manager->decode_token( $token );
+            return (int) $this->decoded_token->data->user_id;
+        } catch ( \Exception $e ) {
+            return $user_id;
         }
     }
 
