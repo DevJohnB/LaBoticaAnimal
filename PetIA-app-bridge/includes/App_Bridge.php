@@ -31,6 +31,7 @@ class App_Bridge {
             'petia_app_bridge_allowed_origins',
             [ 'http://localhost', 'http://localhost:3000' ]
         );
+
     }
 
     public function authenticate_requests( $result ) {
