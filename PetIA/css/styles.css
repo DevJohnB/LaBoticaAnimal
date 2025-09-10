@@ -107,3 +107,32 @@ ul {
     max-width: 500px;
   }
 }
+
+/* Cart page */
+#cart-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1rem;
+}
+
+#cart-table th,
+#cart-table td {
+  border: 1px solid #ccc;
+  padding: 0.5rem;
+  text-align: left;
+}
+
+#cart-table input[type='number'] {
+  width: 60px;
+}
+
+.cart-actions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+#cart-empty {
+  text-align: center;
+  margin: 1rem 0;
+}
