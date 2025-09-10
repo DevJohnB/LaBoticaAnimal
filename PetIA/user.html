@@ -37,7 +37,7 @@
         if (/network|fetch/i.test(error.message)) {
           message = 'Error de red al cargar el perfil';
         } else if (/token|unauthorized|forbidden|auth/i.test(error.message)) {
-          message = 'Error de autenticación. Inicia sesión nuevamente.';
+          message = 'Error de autenticación';
         } else {
           message = 'Respuesta inesperada del servidor.';
         }
