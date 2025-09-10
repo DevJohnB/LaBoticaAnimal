@@ -13,7 +13,6 @@ export async function apiRequest(endpoint, { redirectOnAuthError = false, ...opt
     if (typeof localStorage !== 'undefined') {
       localStorage.setItem('restoreCart', '1');
     }
-    clearToken();
     if (redirectOnAuthError) {
       window.location.href = 'index.html';
     }
@@ -38,7 +37,10 @@ export async function apiRequest(endpoint, { redirectOnAuthError = false, ...opt
     }
     const message = errorBody.message || errorBody.error || '';
     const code = errorBody.code || '';
-    const tokenInvalid = /token/i.test(message) || /token/i.test(code);
+    const tokenInvalid =
+      code === 'TOKEN_EXPIRED' ||
+      code === 'TOKEN_INVALID' ||
+      /token (?:expired|invalid)/i.test(message);
     if (tokenInvalid) {
       if (typeof localStorage !== 'undefined') {
         localStorage.setItem('restoreCart', '1');
@@ -48,9 +50,8 @@ export async function apiRequest(endpoint, { redirectOnAuthError = false, ...opt
         window.location.href = 'index.html';
       }
       throw new Error('Unauthorized');
-    } else {
-      throw new Error('Authorization failed. Please retry.');
     }
+    throw new Error('Authorization failed. Please retry.');
   }
   if (!response.ok) {
     const message = response.status >= 500 ? 'Server error' : 'Unexpected response';
