@@ -69,6 +69,7 @@ class App_Bridge {
             ) {
                 return new \WP_Error( 'forbidden', 'User not allowed', [ 'status' => 403 ] );
             }
+            wp_set_current_user( $user_id );
 
             return $result;
         } catch ( \Exception $e ) {
