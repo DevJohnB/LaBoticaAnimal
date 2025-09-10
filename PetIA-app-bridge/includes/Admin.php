@@ -27,12 +27,15 @@ class Admin {
         echo '<div class="wrap">';
         echo '<h1>' . esc_html__( 'PetIA App Bridge', 'petia-app-bridge' ) . '</h1>';
         echo '<h2 class="nav-tab-wrapper">';
-        echo '<a href="' . esc_url( add_query_arg( 'tab', 'access', $base_url ) ) . '" class="nav-tab ' . ( 'tests' !== $tab ? 'nav-tab-active' : '' ) . '">' . esc_html__( 'Access Control', 'petia-app-bridge' ) . '</a>';
+        echo '<a href="' . esc_url( add_query_arg( 'tab', 'access', $base_url ) ) . '" class="nav-tab ' . ( 'access' === $tab ? 'nav-tab-active' : '' ) . '">' . esc_html__( 'Access Control', 'petia-app-bridge' ) . '</a>';
+        echo '<a href="' . esc_url( add_query_arg( 'tab', 'cors', $base_url ) ) . '" class="nav-tab ' . ( 'cors' === $tab ? 'nav-tab-active' : '' ) . '">' . esc_html__( 'CORS', 'petia-app-bridge' ) . '</a>';
         echo '<a href="' . esc_url( add_query_arg( 'tab', 'tests', $base_url ) ) . '" class="nav-tab ' . ( 'tests' === $tab ? 'nav-tab-active' : '' ) . '">' . esc_html__( 'Run Tests', 'petia-app-bridge' ) . '</a>';
         echo '</h2>';
 
         if ( 'tests' === $tab ) {
             $this->render_tests_tab();
+        } elseif ( 'cors' === $tab ) {
+            $this->render_cors_tab();
         } else {
             $this->render_access_tab();
         }
@@ -93,5 +96,26 @@ class Admin {
             echo '<pre>' . $output . '</pre>';
         }
         echo '<form method="post"><p><button class="button button-primary" name="run-tests">' . esc_html__( 'Run Node Tests', 'petia-app-bridge' ) . '</button></p></form>';
+    }
+
+    private function render_cors_tab() {
+        if (
+            isset( $_POST['petia_cors_nonce'] ) &&
+            wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['petia_cors_nonce'] ) ), 'petia_save_cors' )
+        ) {
+            $origins_raw = isset( $_POST['allowed_origins'] )
+                ? sanitize_textarea_field( wp_unslash( $_POST['allowed_origins'] ) )
+                : '';
+            $origins = array_filter( array_map( 'trim', preg_split( '/\r\n|\r|\n/', $origins_raw ) ) );
+            update_option( 'petia_app_bridge_allowed_origins', $origins );
+            echo '<div class="updated"><p>' . esc_html__( 'Settings saved.', 'petia-app-bridge' ) . '</p></div>';
+        }
+
+        $origins = (array) get_option( 'petia_app_bridge_allowed_origins', [] );
+        echo '<form method="post">';
+        wp_nonce_field( 'petia_save_cors', 'petia_cors_nonce' );
+        echo '<p><textarea name="allowed_origins" rows="5" cols="50">' . esc_textarea( implode( PHP_EOL, $origins ) ) . '</textarea></p>';
+        echo '<p><input type="submit" class="button-primary" value="' . esc_attr__( 'Save Changes', 'petia-app-bridge' ) . '"></p>';
+        echo '</form>';
     }
 }

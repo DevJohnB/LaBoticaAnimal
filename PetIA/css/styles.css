@@ -16,6 +16,23 @@ h1 {
   text-align: center;
 }
 
+nav {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+nav a {
+  text-decoration: none;
+}
+
+/* Chat iframe */
+.chat-frame {
+  width: 100%;
+  height: 80vh;
+  border: none;
+}
+
 /* Form layout */
 form {
   display: flex;
