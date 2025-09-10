@@ -22,7 +22,7 @@
 
     async function load() {
       try {
-        const data = await apiRequest(config.endpoints.profile);
+        const data = await apiRequest(config.endpoints.profile, { redirectOnAuthError: false });
         const profile = document.getElementById('profile');
         profile.innerHTML = `
           <p><strong>Usuario:</strong> ${data.username}</p>
