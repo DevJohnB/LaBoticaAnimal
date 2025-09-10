@@ -29,7 +29,12 @@ export async function apiRequest(endpoint, options = {}) {
     throw new Error('Invalid JSON response');
   }
   const data = await response.json();
-  if (data && data.error) {
+  if (typeof data !== 'object' || data === null) {
+    clearToken();
+    window.location.href = 'index.html';
+    throw new Error('Invalid response');
+  }
+  if (data.error) {
     throw new Error(data.error);
   }
   return data;
