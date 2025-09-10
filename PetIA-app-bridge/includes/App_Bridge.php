@@ -301,8 +301,15 @@ class App_Bridge {
 
     public function handle_profile_get( \WP_REST_Request $request ) {
         $user = wp_get_current_user();
+        if ( 0 === $user->ID ) {
+            return new \WP_Error(
+                'authentication_required',
+                'Authentication required',
+                [ 'status' => 401 ]
+            );
+        }
         return [
-            'id'         => $user->ID,
+            'id'          => $user->ID,
             'username'    => $user->user_login,
             'display_name'=> $user->display_name,
             'email'       => $user->user_email,
