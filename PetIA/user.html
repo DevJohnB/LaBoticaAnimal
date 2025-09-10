@@ -32,7 +32,11 @@
           <p><strong>Email:</strong> ${data.email}</p>
         `;
       } catch (error) {
-        document.getElementById('profile').textContent = 'Error cargando perfil';
+        const profile = document.getElementById('profile');
+        profile.innerHTML = '<p>No se pudo cargar el perfil. Por favor inicia sesión.</p>';
+        setTimeout(() => {
+          window.location.href = 'index.html';
+        }, 2000);
       }
     }
 
