@@ -68,11 +68,12 @@ class CatalogController {
         foreach ( $products as $product ) {
             $image_id = $product->get_image_id();
             $item     = [
-                'id'    => $product->get_id(),
-                'name'  => $product->get_name(),
-                'price' => $product->get_price(),
-                'image' => $image_id ? wp_get_attachment_url( $image_id ) : '',
-                'type'  => $product->get_type(),
+                'id'             => $product->get_id(),
+                'name'           => $product->get_name(),
+                'price'          => (float) $product->get_price(),
+                'formatted_price' => function_exists( 'wc_price' ) ? wc_price( $product->get_price() ) : null,
+                'image'          => $image_id ? wp_get_attachment_url( $image_id ) : '',
+                'type'           => $product->get_type(),
             ];
             if ( 'variable' === $product->get_type() ) {
                 $attributes = [];

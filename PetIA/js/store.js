@@ -44,7 +44,7 @@ function renderProducts(products, panel) {
     li.innerHTML = `
       <img src="${p.image}" alt="${p.name}" />
       <div class="name">${p.name}</div>
-      <div class="price">${p.price}</div>
+      <div class="price">${p.formatted_price ?? p.price}</div>
       ${attrsHtml}
       <button class="add-cart">Añadir</button>
     `;
