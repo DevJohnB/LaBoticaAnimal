@@ -253,10 +253,6 @@ class App_Bridge {
         try {
             $decoded  = $this->token_manager->decode_token( $token );
             $user_id  = (int) $decoded->data->user_id;
-            $user     = get_user_by( 'id', $user_id );
-            if ( ! $user ) {
-                return new \WP_Error( 'invalid_user', 'User not found', [ 'status' => 401 ] );
-            }
             global $wpdb;
             $table  = $wpdb->prefix . 'petia_app_bridge_access';
             $access = $wpdb->get_row(
@@ -275,7 +271,7 @@ class App_Bridge {
                 return new \WP_Error( 'forbidden', 'User not allowed', [ 'status' => 403 ] );
             }
 
-            return [ 'valid' => true, 'user_id' => (int) $user->ID ];
+            return [ 'valid' => true, 'user_id' => $user_id ];
         } catch ( \Exception $e ) {
             return new \WP_Error( 'invalid_token', $e->getMessage(), [ 'status' => 401 ] );
         }
