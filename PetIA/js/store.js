@@ -27,6 +27,7 @@ async function loadCategoryProducts(categoryId) {
 function renderProducts(products, panel) {
   panel.innerHTML = '';
   const list = document.createElement('ul');
+  list.className = 'product-list';
   panel.appendChild(list);
   products.forEach(p => {
     const li = document.createElement('li');
