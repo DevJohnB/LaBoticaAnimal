@@ -14,36 +14,44 @@
     <input type="password" id="password" placeholder="Password" />
     <button type="submit">Login</button>
   </form>
-    <script type="module" src="./js/loading.js"></script>
     <script type="module">
     import config from './config.js';
     import { setToken } from './js/token.js';
     import { syncLocalCart, getCart, getCartKey } from './js/cart.js';
+    import { showLoading, hideLoading } from './js/loading.js';
     const form = document.getElementById('loginForm');
     form.addEventListener('submit', async e => {
       e.preventDefault();
-      const res = await fetch(config.apiBaseUrl + config.endpoints.login, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email.value, password: password.value }),
-      });
-      const token = res.headers.get('Authorization')?.split(' ')[1];
-      if (token) {
-        setToken(token);
-        await syncLocalCart();
-        if (
-          typeof localStorage !== 'undefined' &&
-          localStorage.getItem('restoreCart') &&
-          getCartKey()
-        ) {
-          try {
-            await getCart();
-          } catch (err) {
-            console.error('Error restoring cart', err);
+      const btn = form.querySelector('button');
+      btn.disabled = true;
+      showLoading();
+      try {
+        const res = await fetch(config.apiBaseUrl + config.endpoints.login, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: email.value, password: password.value }),
+        });
+        const token = res.headers.get('Authorization')?.split(' ')[1];
+        if (token) {
+          setToken(token);
+          await syncLocalCart();
+          if (
+            typeof localStorage !== 'undefined' &&
+            localStorage.getItem('restoreCart') &&
+            getCartKey()
+          ) {
+            try {
+              await getCart();
+            } catch (err) {
+              console.error('Error restoring cart', err);
+            }
+            localStorage.removeItem('restoreCart');
           }
-          localStorage.removeItem('restoreCart');
+          location.href = 'chat.html';
         }
-        location.href = 'chat.html';
+      } finally {
+        hideLoading();
+        btn.disabled = false;
       }
     });
   </script>
