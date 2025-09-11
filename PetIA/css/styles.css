@@ -53,6 +53,10 @@ ul {
   padding: 0;
 }
 
+:root {
+  --product-img-size: 80px;
+}
+
 .addresses {
   display: flex;
   gap: 1rem;
@@ -106,11 +110,10 @@ ul {
 .product-list li.product {
   border: 1px solid #ccc;
   padding: 0.5rem;
-  width: 150px;
   text-align: center;
 }
 
-/* Change --product-img-size here or via inline style to adjust thumbnail size */
+/* Change --product-img-size in :root or via inline style to adjust thumbnail size */
 .product-list li.product img {
   width: var(--product-img-size, 80px);
   height: var(--product-img-size, 80px);
