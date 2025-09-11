@@ -32,5 +32,16 @@ describe('cart', () => {
     const url = second.mock.calls[0][0];
     expect(url).toMatch(/cart_key=abc123/);
   });
+
+  test('includes variation in request body', async () => {
+    const mockApi = jest.fn(async () => ({ items: [] }));
+    jest.unstable_mockModule('../PetIA/js/api.js', () => ({ apiRequest: mockApi }));
+    const { addItem } = await import('../PetIA/js/cart.js');
+    sessionStorage.setItem('token', 't');
+    const variation = { attribute_pa_color: 'blue', attribute_pa_size: 'm' };
+    await addItem(10, 1, variation);
+    const body = JSON.parse(mockApi.mock.calls[0][1].body);
+    expect(body.variation).toEqual(variation);
+  });
 });
 

@@ -491,13 +491,31 @@ class App_Bridge {
         $products = wc_get_products( $args );
         $data     = [];
         foreach ( $products as $product ) {
-            $image_id  = $product->get_image_id();
-            $data[] = [
+            $image_id = $product->get_image_id();
+            $item     = [
                 'id'    => $product->get_id(),
                 'name'  => $product->get_name(),
                 'price' => $product->get_price(),
                 'image' => $image_id ? wp_get_attachment_url( $image_id ) : '',
+                'type'  => $product->get_type(),
             ];
+            if ( 'variable' === $product->get_type() ) {
+                $attributes = [];
+                foreach ( $product->get_variation_attributes() as $taxonomy => $options ) {
+                    $attributes[ $taxonomy ] = array_values( $options );
+                }
+                $item['attributes'] = $attributes;
+                $item['variations'] = array_map(
+                    function( $variation ) {
+                        return [
+                            'id'         => $variation['variation_id'],
+                            'attributes' => $variation['attributes'],
+                        ];
+                    },
+                    $product->get_available_variations()
+                );
+            }
+            $data[] = $item;
         }
         return $data;
     }
