@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="stylesheet" href="css/styles.css" />
+    <link rel="stylesheet" href="css/styles.css" />
+    <link rel="stylesheet" href="css/loading.css" />
   <title>PetIA Login</title>
 </head>
 <body>
@@ -13,7 +14,8 @@
     <input type="password" id="password" placeholder="Password" />
     <button type="submit">Login</button>
   </form>
-  <script type="module">
+    <script type="module" src="./js/loading.js"></script>
+    <script type="module">
     import config from './config.js';
     import { setToken } from './js/token.js';
     import { syncLocalCart, getCart, getCartKey } from './js/cart.js';
