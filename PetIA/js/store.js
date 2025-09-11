@@ -89,11 +89,19 @@ function setActiveTab(tab, panel, tabsContainer, contentContainer) {
   panel.classList.add('active');
 }
 
+function hasProducts(cat) {
+  if (typeof cat.count === 'number') return cat.count > 0;
+  if (typeof cat.num_products === 'number') return cat.num_products > 0;
+  if (typeof cat.hide_empty !== 'undefined') return !cat.hide_empty;
+  return true;
+}
+
 function renderCategories(categories) {
-  allCategories = categories;
+  const visibleCategories = categories.filter(hasProducts);
+  allCategories = visibleCategories;
   const tabs = document.getElementById('category-tabs');
   const content = document.getElementById('category-content');
-  categories
+  visibleCategories
     .filter(c => !c.parent)
     .forEach(cat => {
       const tab = document.createElement('div');
@@ -136,7 +144,9 @@ function renderCategories(categories) {
 function renderSubcategories(parentId) {
   const panel = document.getElementById(`panel-${parentId}`);
   if (!panel || panel.dataset.subRendered) return;
-  const subs = allCategories.filter(c => c.parent === parentId);
+  const subs = allCategories.filter(
+    c => c.parent === parentId && hasProducts(c)
+  );
   if (subs.length === 0) {
     loadCategoryProducts(parentId);
     panel.dataset.subRendered = 'true';
