@@ -8,16 +8,18 @@ ensureAuth();
 
 const loadedCategories = new Map();
 let allCategories = [];
+const navigationStack = [];
 
 async function loadCategoryProducts(categoryId) {
-  const panel = document.getElementById(`panel-${categoryId}`);
-  if (!panel) return;
+  const panel = document.getElementById('category-content');
   if (loadedCategories.has(categoryId)) {
     renderProducts(loadedCategories.get(categoryId), panel);
     return;
   }
   panel.innerHTML = '<p>Cargando...</p>';
-  const products = await apiRequest(`${config.endpoints.products}?category=${categoryId}`);
+  const products = await apiRequest(
+    `${config.endpoints.products}?category=${categoryId}`
+  );
   loadedCategories.set(categoryId, products);
   renderProducts(products, panel);
 }
@@ -80,15 +82,6 @@ function renderProducts(products, panel) {
   });
 }
 
-function setActiveTab(tab, panel, tabsContainer, contentContainer) {
-  tabsContainer.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-  contentContainer
-    .querySelectorAll('.tab-panel')
-    .forEach(p => p.classList.remove('active'));
-  tab.classList.add('active');
-  panel.classList.add('active');
-}
-
 function hasProducts(cat) {
   if (typeof cat.count === 'number') return cat.count > 0;
   if (typeof cat.num_products === 'number') return cat.num_products > 0;
@@ -96,100 +89,48 @@ function hasProducts(cat) {
   return true;
 }
 
-function renderCategories(categories) {
-  const visibleCategories = categories.filter(hasProducts);
-  allCategories = visibleCategories;
+function renderCategoryLevel(parentId) {
   const tabs = document.getElementById('category-tabs');
   const content = document.getElementById('category-content');
-  visibleCategories
-    .filter(c => !c.parent)
-    .forEach(cat => {
-      const tab = document.createElement('div');
-      tab.className = 'tab';
-      tab.textContent = cat.name;
-      tab.dataset.id = cat.id;
-      tabs.appendChild(tab);
+  tabs.innerHTML = '';
+  content.innerHTML = '';
 
-      const panel = document.createElement('div');
-      panel.className = 'tab-panel';
-      panel.id = `panel-${cat.id}`;
-      content.appendChild(panel);
-
-      tab.addEventListener('click', () => {
-        setActiveTab(tab, panel, tabs, content);
-        // Remove active from any subcategory tab
-        document
-          .querySelectorAll('#category-content .tab')
-          .forEach(t => t.classList.remove('active'));
-        if (typeof localStorage !== 'undefined') {
-          localStorage.setItem('activeCategory', cat.id);
-        }
-        renderSubcategories(cat.id);
-      });
+  if (navigationStack.length > 0) {
+    const back = document.createElement('button');
+    back.textContent = 'Atrás';
+    back.addEventListener('click', () => {
+      const prev = navigationStack.pop();
+      renderCategoryLevel(prev ?? null);
     });
-
-  const saved =
-    typeof localStorage !== 'undefined' && localStorage.getItem('activeCategory');
-  let toActivate = null;
-  if (saved) {
-    const cat = allCategories.find(c => String(c.id) === saved);
-    if (cat) {
-      const rootId = cat.parent || cat.id;
-      toActivate = tabs.querySelector(`.tab[data-id="${rootId}"]`);
-    }
+    tabs.appendChild(back);
   }
-  (toActivate || tabs.querySelector('.tab'))?.click();
-}
 
-function renderSubcategories(parentId) {
-  const panel = document.getElementById(`panel-${parentId}`);
-  if (!panel || panel.dataset.subRendered) return;
-  const subs = allCategories.filter(
-    c => c.parent === parentId && hasProducts(c)
-  );
-  if (subs.length === 0) {
+  const cats = allCategories.filter(c =>
+    parentId === null ? !c.parent : c.parent === parentId
+  ).filter(hasProducts);
+
+  if (cats.length === 0) {
     loadCategoryProducts(parentId);
-    panel.dataset.subRendered = 'true';
     return;
   }
-  const tabs = document.createElement('div');
-  tabs.className = 'tabs';
-  const content = document.createElement('div');
-  panel.appendChild(tabs);
-  panel.appendChild(content);
-  subs.forEach(sub => {
+
+  cats.forEach(cat => {
     const tab = document.createElement('div');
     tab.className = 'tab';
-    tab.textContent = sub.name;
-    tab.dataset.id = sub.id;
+    tab.textContent = cat.name;
     tabs.appendChild(tab);
-
-    const subPanel = document.createElement('div');
-    subPanel.className = 'tab-panel';
-    subPanel.id = `panel-${sub.id}`;
-    content.appendChild(subPanel);
-
     tab.addEventListener('click', () => {
-      setActiveTab(tab, subPanel, tabs, content);
-      if (typeof localStorage !== 'undefined') {
-        localStorage.setItem('activeCategory', sub.id);
-      }
-      loadCategoryProducts(sub.id);
+      navigationStack.push(parentId);
+      renderCategoryLevel(cat.id);
     });
   });
-  const saved =
-    typeof localStorage !== 'undefined' && localStorage.getItem('activeCategory');
-  const toActivate = saved
-    ? tabs.querySelector(`.tab[data-id="${saved}"]`)
-    : null;
-  (toActivate || tabs.querySelector('.tab'))?.click();
-  panel.dataset.subRendered = 'true';
 }
 
 (async function init() {
   const categories = await apiRequest(config.endpoints.productCategories);
-  renderCategories(categories);
+  allCategories = categories.filter(hasProducts);
+  renderCategoryLevel(null);
 })();
 
-export { renderCategories, loadCategoryProducts, renderSubcategories };
+export { renderCategoryLevel, loadCategoryProducts };
 
