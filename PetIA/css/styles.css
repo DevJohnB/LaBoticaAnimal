@@ -53,10 +53,6 @@ ul {
   padding: 0;
 }
 
-:root {
-  --product-img-size: 240px;
-}
-
 .addresses {
   display: flex;
   gap: 1rem;
@@ -113,11 +109,12 @@ ul {
   text-align: center;
 }
 
-/* Change --product-img-size in :root or via inline style to adjust thumbnail size */
+/* Product images scale with container while preserving aspect ratio */
 .product-list li.product img {
-  width: var(--product-img-size, 240px);
-  height: var(--product-img-size, 240px);
-  object-fit: cover;
+  width: 100%;
+  height: auto;
+  max-width: 100%;
+  object-fit: contain;
 }
 
 /* Responsive adjustments */

@@ -11,7 +11,7 @@ Aplicación web estática que consume los endpoints del plugin PetIA App Bridge.
 3. Abre `index.html` para iniciar sesión.
 
 ## Personalización
-- El tamaño de las miniaturas de productos se controla con la variable CSS `--product-img-size`. Cambia su valor en `css/styles.css` o mediante un estilo inline, por ejemplo: `<ul class="product-list" style="--product-img-size: 100px">`.
+- Las imágenes de producto se adaptan automáticamente al ancho de su contenedor conservando la proporción.
 
 ## Categorías de productos
 
