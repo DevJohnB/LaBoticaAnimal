@@ -1,5 +1,6 @@
 import config from '../config.js';
 import { getToken, clearToken, fetchWithAuth, isTokenExpired } from './token.js';
+import { showLoading, hideLoading } from './loading.js';
 
 export async function apiRequest(endpoint, { redirectOnAuthError = false, ...options } = {}) {
   const token = getToken();
@@ -24,9 +25,12 @@ export async function apiRequest(endpoint, { redirectOnAuthError = false, ...opt
   }
   let response;
   try {
+    showLoading();
     response = await fetchWithAuth(url, options);
   } catch (e) {
     throw new Error('Network error');
+  } finally {
+    hideLoading();
   }
   if (response.status === 401 || response.status === 403) {
     let errorBody = {};
