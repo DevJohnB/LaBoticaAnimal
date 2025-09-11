@@ -25,19 +25,33 @@
       async function load() {
         try {
           const data = await apiRequest(config.endpoints.profile);
-        const profile = document.getElementById('profile');
-        profile.innerHTML = `
+
+          // Intenta obtener direcciones del perfil; si no existen, llama a la API de clientes
+          let { billing_address, shipping_address } = data;
+          if (!billing_address || !shipping_address) {
+            const customer = await apiRequest(
+              '/wp-json/petia-app-bridge/v1/wc/customers/me'
+            );
+            billing_address = customer.billing_address;
+            shipping_address = customer.shipping_address;
+          }
+
+          const profile = document.getElementById('profile');
+          profile.innerHTML = `
           <p><strong>Usuario:</strong> ${data.username}</p>
           <p><strong>Nombre:</strong> ${data.first_name}</p>
           <p><strong>Apellido:</strong> ${data.last_name}</p>
           <p><strong>Nombre a mostrar:</strong> ${data.display_name}</p>
           <p><strong>Email:</strong> ${data.email}</p>
-        `;
-      } catch (error) {
-        console.error('Perfil:', error);
-        let message;
-        if (/network|fetch/i.test(error.message)) {
-          message = 'Error de red al cargar el perfil';
+          <div class="addresses">
+            ${formatAddress('Dirección de facturación', billing_address)}
+            ${formatAddress('Dirección de envío', shipping_address)}
+          </div>`;
+        } catch (error) {
+          console.error('Perfil:', error);
+          let message;
+          if (/network|fetch/i.test(error.message)) {
+            message = 'Error de red al cargar el perfil';
         } else if (/token|unauthorized|forbidden|auth/i.test(error.message)) {
           message = 'Error de autenticación';
         } else {
@@ -48,6 +62,23 @@
       }
 
       load();
+    }
+
+    function formatAddress(title, address) {
+      if (!address) return '';
+      return `
+        <div class="address">
+          <h2>${title}</h2>
+          <p>${address.first_name || ''} ${address.last_name || ''}</p>
+          <p>${address.company || ''}</p>
+          <p>${address.address_1 || ''}</p>
+          ${address.address_2 ? `<p>${address.address_2}</p>` : ''}
+          <p>${address.postcode || ''} ${address.city || ''}</p>
+          <p>${address.state || ''} ${address.country || ''}</p>
+          <p>${address.phone || ''}</p>
+          ${address.email ? `<p>${address.email}</p>` : ''}
+        </div>
+      `;
     }
   </script>
 </body>
