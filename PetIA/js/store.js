@@ -2,6 +2,7 @@ import config from '../config.js';
 import { apiRequest } from './api.js';
 import { addItem } from './cart.js';
 import { ensureAuth } from './token.js';
+import { showToast } from './notifications.js';
 
 ensureAuth();
 
@@ -62,14 +63,14 @@ function renderProducts(products, panel) {
             );
           });
           if (!variationMatch) {
-            alert('Variación no encontrada');
+            showToast('Variación no encontrada', 'error');
             return;
           }
           await addItem(variationMatch.id, 1, variationSeleccionada);
         } else {
           await addItem(p.id, 1);
         }
-        alert('Producto agregado');
+        showToast('Producto agregado', 'success');
       } finally {
         btn.disabled = false;
         btn.classList.remove('loading');
