@@ -300,7 +300,23 @@ class App_Bridge {
     }
 
     public function handle_profile_get( \WP_REST_Request $request ) {
-        $user = wp_get_current_user();
+    error_log('Authorization header: ' . ($_SERVER['HTTP_AUTHORIZATION'] ?? 'N/A'));
+
+    // Fijar el usuario directamente usando el token (similar a handle_validate_token)
+    $token = $this->token_manager->get_authorization_header();
+    if ( ! $token ) {
+        return new WP_Error('no_token', 'Header Authorization ausente', ['status' => 401]);
+    }
+
+    try {
+        $decoded = $this->token_manager->decode_token( $token );
+        $user_id = (int) $decoded->data->user_id;
+        $user = wp_set_current_user( $user_id );
+    } catch ( Exception $e ) {
+        return new WP_Error('invalid_token', $e->getMessage(), ['status' => 401]);
+    }
+
+        //$user = wp_get_current_user();
         if ( 0 === $user->ID ) {
             return new \WP_Error(
                 'authentication_required',
