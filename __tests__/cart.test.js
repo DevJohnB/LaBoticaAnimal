@@ -41,7 +41,10 @@ describe('cart', () => {
     const variation = { attribute_pa_color: 'blue', attribute_pa_size: 'm' };
     await addItem(10, 1, variation);
     const body = JSON.parse(mockApi.mock.calls[0][1].body);
-    expect(body.variation).toEqual(variation);
+    expect(body.variation).toEqual([
+      { attribute: 'attribute_pa_color', value: 'blue' },
+      { attribute: 'attribute_pa_size', value: 'm' },
+    ]);
   });
 });
 
