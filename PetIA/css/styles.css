@@ -53,6 +53,10 @@ ul {
   padding: 0;
 }
 
+:root {
+  --product-img-size: 80px;
+}
+
 .addresses {
   display: flex;
   gap: 1rem;
@@ -97,22 +101,23 @@ ul {
   display: block;
 }
 
-.tab-panel ul {
-  display: flex;
-  flex-wrap: wrap;
+.product-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
   gap: 1rem;
 }
 
-.tab-panel li.product {
+.product-list li.product {
   border: 1px solid #ccc;
   padding: 0.5rem;
-  width: 150px;
   text-align: center;
 }
 
-.tab-panel li.product img {
-  max-width: 100%;
-  height: auto;
+/* Change --product-img-size in :root or via inline style to adjust thumbnail size */
+.product-list li.product img {
+  width: var(--product-img-size, 80px);
+  height: var(--product-img-size, 80px);
+  object-fit: cover;
 }
 
 /* Responsive adjustments */
