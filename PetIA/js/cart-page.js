@@ -20,9 +20,10 @@ async function renderCart() {
     empty.style.display = 'none';
     cart.items.forEach(item => {
       const tr = document.createElement('tr');
+      const price = item.formatted_price ?? item.price ?? item.prices?.price ?? '';
       tr.innerHTML = `
         <td>${item.name}</td>
-        <td>${item.prices?.price ?? ''}</td>
+        <td>${price}</td>
         <td><input type="number" min="1" value="${item.quantity}" /></td>
         <td>${item.totals?.line_total ?? ''}</td>
         <td><button class="remove">Eliminar</button></td>
