@@ -14,6 +14,7 @@
   </form>
   <script type="module">
     import config from './config.js';
+    import { showToast } from './js/notifications.js';
     const form = document.getElementById('recoverForm');
     form.addEventListener('submit', async e => {
       e.preventDefault();
@@ -22,7 +23,7 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: email.value }),
       });
-      alert('Check your email');
+      showToast('Check your email', 'success');
     });
   </script>
 </body>
