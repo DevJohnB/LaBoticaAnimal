@@ -473,6 +473,10 @@ class App_Bridge {
         return $data;
     }
 
+    private function normalize_attribute_key( $key ) {
+        return 0 === strpos( $key, 'attribute_' ) ? $key : 'attribute_' . $key;
+    }
+
     public function handle_products( \WP_REST_Request $request ) {
         if ( ! function_exists( 'wc_get_products' ) ) {
             return [];
@@ -502,14 +506,18 @@ class App_Bridge {
             if ( 'variable' === $product->get_type() ) {
                 $attributes = [];
                 foreach ( $product->get_variation_attributes() as $taxonomy => $options ) {
-                    $attributes[ $taxonomy ] = array_values( $options );
+                    $attributes[ $this->normalize_attribute_key( $taxonomy ) ] = array_values( $options );
                 }
                 $item['attributes'] = $attributes;
                 $item['variations'] = array_map(
                     function( $variation ) {
+                        $normalized_attributes = [];
+                        foreach ( $variation['attributes'] as $key => $value ) {
+                            $normalized_attributes[ $this->normalize_attribute_key( $key ) ] = $value;
+                        }
                         return [
                             'id'         => $variation['variation_id'],
-                            'attributes' => $variation['attributes'],
+                            'attributes' => $normalized_attributes,
                         ];
                     },
                     $product->get_available_variations()
