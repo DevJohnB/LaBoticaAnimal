@@ -1,4 +1,5 @@
 import { apiRequest } from './api.js';
+import config from '../config.js';
 import { getToken } from './token.js';
 
 // Local storage keys
@@ -53,7 +54,7 @@ export async function syncLocalCart() {
   if (!getToken()) return;
   const items = getLocalCart();
   for (const item of items) {
-    await cartRequest('/wc-store/cart/add-item', {
+    await cartRequest(config.endpoints.cartAddItem, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id: item.id, quantity: item.quantity }),
@@ -66,7 +67,7 @@ export function getCart() {
   if (!getToken()) {
     return Promise.resolve({ items: getLocalCart() });
   }
-  return cartRequest('/wp-json/petia-app-bridge/v1/wc-store/cart');
+  return cartRequest(config.endpoints.cart);
 }
 
 export function addItem(productId, quantity) {
@@ -81,7 +82,7 @@ export function addItem(productId, quantity) {
     setLocalCart(cart);
     return Promise.resolve({ items: cart });
   }
-  return cartRequest('/wc-store/cart/add-item', {
+  return cartRequest(config.endpoints.cartAddItem, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ id: productId, quantity }),
@@ -96,7 +97,7 @@ export function updateItem(itemKey, quantity) {
     setLocalCart(cart);
     return Promise.resolve({ items: cart });
   }
-  return cartRequest('/wc-store/cart/update-item', {
+  return cartRequest(config.endpoints.cartUpdateItem, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ key: itemKey, quantity }),
@@ -111,7 +112,7 @@ export function removeItem(itemKey) {
     setLocalCart(cart);
     return Promise.resolve({ items: cart });
   }
-  return cartRequest('/wc-store/cart/remove-item', {
+  return cartRequest(config.endpoints.cartRemoveItem, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ key: itemKey }),

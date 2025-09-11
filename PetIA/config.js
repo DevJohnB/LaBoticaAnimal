@@ -15,5 +15,9 @@ export default {
     productCategories: '/wp-json/petia-app-bridge/v1/product-categories',
     products: '/wp-json/petia-app-bridge/v1/products',
     brands: '/wp-json/petia-app-bridge/v1/brands',
+    cart: '/wp-json/petia-app-bridge/v1/wc-store/cart',
+    cartAddItem: '/wp-json/petia-app-bridge/v1/wc-store/cart/add-item',
+    cartUpdateItem: '/wp-json/petia-app-bridge/v1/wc-store/cart/update-item',
+    cartRemoveItem: '/wp-json/petia-app-bridge/v1/wc-store/cart/remove-item',
   },
 };
