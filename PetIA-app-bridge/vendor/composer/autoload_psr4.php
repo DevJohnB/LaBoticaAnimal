@@ -6,6 +6,7 @@ $vendorDir = dirname(__DIR__);
 $baseDir = dirname($vendorDir);
 
 return array(
+    'PetIA\\Controllers\\' => array($baseDir . '/includes/Controllers'),
     'PetIA\\' => array($baseDir . '/includes'),
     'Firebase\\JWT\\' => array($vendorDir . '/firebase/php-jwt/src'),
 );

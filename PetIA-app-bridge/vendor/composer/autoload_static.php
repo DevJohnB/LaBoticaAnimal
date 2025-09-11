@@ -9,6 +9,7 @@ class ComposerStaticInit8cc91ac762c2e90eb4ef7d4f9f641be4
     public static $prefixLengthsPsr4 = array (
         'P' => 
         array (
+            'PetIA\\Controllers\\' => 18,
             'PetIA\\' => 6,
         ),
         'F' => 
@@ -18,6 +19,10 @@ class ComposerStaticInit8cc91ac762c2e90eb4ef7d4f9f641be4
     );
 
     public static $prefixDirsPsr4 = array (
+        'PetIA\\Controllers\\' => 
+        array (
+            0 => __DIR__ . '/../..' . '/includes/Controllers',
+        ),
         'PetIA\\' => 
         array (
             0 => __DIR__ . '/../..' . '/includes',
