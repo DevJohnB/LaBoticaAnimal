@@ -28,15 +28,32 @@ function renderProducts(products, panel) {
   products.forEach(p => {
     const li = document.createElement('li');
     li.className = 'product';
+    let attrsHtml = '';
+    if (p.type === 'variable' && p.attributes) {
+      Object.entries(p.attributes).forEach(([attr, options]) => {
+        const opts = options
+          .map(o => `<option value="${o}">${o}</option>`) // simple label
+          .join('');
+        attrsHtml += `<label>${attr}<select data-attr="${attr}">${opts}</select></label>`;
+      });
+    }
     li.innerHTML = `
       <img src="${p.image}" alt="${p.name}" />
       <div class="name">${p.name}</div>
       <div class="price">${p.price}</div>
+      ${attrsHtml}
       <button class="add-cart">Añadir</button>
     `;
     const btn = li.querySelector('.add-cart');
     btn.addEventListener('click', async () => {
-      await addItem(p.id, 1);
+      let variation;
+      if (p.type === 'variable' && p.attributes) {
+        variation = {};
+        li.querySelectorAll('select[data-attr]').forEach(sel => {
+          variation[sel.dataset.attr] = sel.value;
+        });
+      }
+      await addItem(p.id, 1, variation);
       alert('Producto agregado');
     });
     list.appendChild(li);

@@ -37,6 +37,15 @@ function setLocalCart(items) {
   localStorage.setItem(LOCAL_CART_STORAGE, JSON.stringify(items));
 }
 
+function buildItemKey(id, variation) {
+  if (!variation) return String(id);
+  const attrs = Object.keys(variation)
+    .sort()
+    .map(k => `${k}:${variation[k]}`)
+    .join('|');
+  return `${id}-${attrs}`;
+}
+
 function clearLocalCart() {
   if (typeof localStorage === 'undefined') return;
   localStorage.removeItem(LOCAL_CART_STORAGE);
@@ -57,7 +66,11 @@ export async function syncLocalCart() {
     await cartRequest(config.endpoints.cartAddItem, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: item.id, quantity: item.quantity }),
+      body: JSON.stringify({
+        id: item.id,
+        quantity: item.quantity,
+        ...(item.variation ? { variation: item.variation } : {}),
+      }),
     });
   }
   clearLocalCart();
@@ -70,14 +83,15 @@ export function getCart() {
   return cartRequest(config.endpoints.cart);
 }
 
-export function addItem(productId, quantity) {
+export function addItem(productId, quantity, variation) {
   if (!getToken()) {
     const cart = getLocalCart();
-    const existing = cart.find(i => i.id === productId);
+    const key = buildItemKey(productId, variation);
+    const existing = cart.find(i => i.key === key);
     if (existing) {
       existing.quantity += quantity;
     } else {
-      cart.push({ id: productId, quantity, key: String(productId) });
+      cart.push({ id: productId, quantity, variation, key });
     }
     setLocalCart(cart);
     return Promise.resolve({ items: cart });
@@ -85,7 +99,11 @@ export function addItem(productId, quantity) {
   return cartRequest(config.endpoints.cartAddItem, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ id: productId, quantity }),
+    body: JSON.stringify({
+      id: productId,
+      quantity,
+      ...(variation ? { variation } : {}),
+    }),
   });
 }
 
