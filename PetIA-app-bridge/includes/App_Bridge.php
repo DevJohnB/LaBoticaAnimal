@@ -502,14 +502,20 @@ class App_Bridge {
             if ( 'variable' === $product->get_type() ) {
                 $attributes = [];
                 foreach ( $product->get_variation_attributes() as $taxonomy => $options ) {
-                    $attributes[ $taxonomy ] = array_values( $options );
+                    $formatted_taxonomy            = 0 === strpos( $taxonomy, 'attribute_' ) ? $taxonomy : 'attribute_' . $taxonomy;
+                    $attributes[ $formatted_taxonomy ] = array_values( $options );
                 }
                 $item['attributes'] = $attributes;
                 $item['variations'] = array_map(
                     function( $variation ) {
+                        $normalized_attributes = [];
+                        foreach ( $variation['attributes'] as $key => $value ) {
+                            $formatted_key                         = 0 === strpos( $key, 'attribute_' ) ? $key : 'attribute_' . $key;
+                            $normalized_attributes[ $formatted_key ] = $value;
+                        }
                         return [
                             'id'         => $variation['variation_id'],
-                            'attributes' => $variation['attributes'],
+                            'attributes' => $normalized_attributes,
                         ];
                     },
                     $product->get_available_variations()
