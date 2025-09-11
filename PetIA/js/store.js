@@ -46,10 +46,11 @@ function renderProducts(products, panel) {
     `;
     const btn = li.querySelector('.add-cart');
     btn.addEventListener('click', async () => {
+      let variationSeleccionada;
       if (p.type === 'variable' && p.attributes) {
-        const variationSeleccionada = {};
+        variationSeleccionada = {};
         li.querySelectorAll('select[data-attr]').forEach(sel => {
-          variationSeleccionada[`attribute_${sel.dataset.attr}`] = sel.value;
+          variationSeleccionada[sel.dataset.attr] = sel.value;
         });
         const variationMatch = p.variations?.find(v => {
           const attrs = v.attributes || {};
