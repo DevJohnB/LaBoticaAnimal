@@ -54,7 +54,7 @@ ul {
 }
 
 :root {
-  --product-img-size: 80px;
+  --product-img-size: 240px;
 }
 
 .addresses {
@@ -103,7 +103,7 @@ ul {
 
 .product-list {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   gap: 1rem;
 }
 
@@ -115,8 +115,8 @@ ul {
 
 /* Change --product-img-size in :root or via inline style to adjust thumbnail size */
 .product-list li.product img {
-  width: var(--product-img-size, 80px);
-  height: var(--product-img-size, 80px);
+  width: var(--product-img-size, 240px);
+  height: var(--product-img-size, 240px);
   object-fit: cover;
 }
 
