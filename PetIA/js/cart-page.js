@@ -29,13 +29,28 @@ async function renderCart() {
       `;
       const qtyInput = tr.querySelector('input');
       qtyInput.addEventListener('change', async () => {
-        const qty = parseInt(qtyInput.value, 10);
-        await updateItem(item.key, qty);
-        renderCart();
+        qtyInput.disabled = true;
+        qtyInput.classList.add('loading');
+        try {
+          const qty = parseInt(qtyInput.value, 10);
+          await updateItem(item.key, qty);
+          renderCart();
+        } finally {
+          qtyInput.disabled = false;
+          qtyInput.classList.remove('loading');
+        }
       });
-      tr.querySelector('.remove').addEventListener('click', async () => {
-        await removeItem(item.key);
-        renderCart();
+      const removeBtn = tr.querySelector('.remove');
+      removeBtn.addEventListener('click', async () => {
+        removeBtn.disabled = true;
+        removeBtn.classList.add('loading');
+        try {
+          await removeItem(item.key);
+          renderCart();
+        } finally {
+          removeBtn.disabled = false;
+          removeBtn.classList.remove('loading');
+        }
       });
       tbody.appendChild(tr);
     });
@@ -44,13 +59,19 @@ async function renderCart() {
   }
 }
 
-async function clearCart() {
+async function clearCart(e) {
+  const btn = e?.currentTarget;
+  btn.disabled = true;
+  btn.classList.add('loading');
   try {
     const cart = await getCart();
     await Promise.all((cart.items || []).map(i => removeItem(i.key)));
     renderCart();
   } catch (error) {
     console.error('Error al vaciar el carrito:', error);
+  } finally {
+    btn.disabled = false;
+    btn.classList.remove('loading');
   }
 }
 

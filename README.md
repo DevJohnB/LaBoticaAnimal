@@ -13,6 +13,20 @@ Las dependencias PHP vienen incluidas, por lo que no es necesario ejecutar `comp
 1. Sirve la carpeta `PetIA/` en cualquier servidor estático.
 2. Ajusta `API_BASE_URL` si la API está en otra URL (ver `PetIA/config.js`).
 
+## Interacciones con botones
+Al realizar operaciones que invoquen `apiRequest`, deshabilita el botón involucrado y agrega la clase `loading` hasta que la petición finalice. Esto evita múltiples envíos y permite mostrar un spinner interno.
+
+```js
+button.disabled = true;
+button.classList.add('loading');
+try {
+  await apiRequest('/endpoint');
+} finally {
+  button.disabled = false;
+  button.classList.remove('loading');
+}
+```
+
 ## Pruebas
 Instala dependencias y ejecuta las pruebas:
 ```bash

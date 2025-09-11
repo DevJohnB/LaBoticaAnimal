@@ -46,27 +46,34 @@ function renderProducts(products, panel) {
     `;
     const btn = li.querySelector('.add-cart');
     btn.addEventListener('click', async () => {
-      let variationSeleccionada;
-      if (p.type === 'variable' && p.attributes) {
-        variationSeleccionada = {};
-        li.querySelectorAll('select[data-attr]').forEach(sel => {
-          variationSeleccionada[sel.dataset.attr] = sel.value;
-        });
-        const variationMatch = p.variations?.find(v => {
-          const attrs = v.attributes || {};
-          return Object.entries(variationSeleccionada).every(
-            ([attr, val]) => attrs[attr] === val
-          );
-        });
-        if (!variationMatch) {
-          alert('Variación no encontrada');
-          return;
+      btn.disabled = true;
+      btn.classList.add('loading');
+      try {
+        let variationSeleccionada;
+        if (p.type === 'variable' && p.attributes) {
+          variationSeleccionada = {};
+          li.querySelectorAll('select[data-attr]').forEach(sel => {
+            variationSeleccionada[sel.dataset.attr] = sel.value;
+          });
+          const variationMatch = p.variations?.find(v => {
+            const attrs = v.attributes || {};
+            return Object.entries(variationSeleccionada).every(
+              ([attr, val]) => attrs[attr] === val
+            );
+          });
+          if (!variationMatch) {
+            alert('Variación no encontrada');
+            return;
+          }
+          await addItem(variationMatch.id, 1, variationSeleccionada);
+        } else {
+          await addItem(p.id, 1);
         }
-        await addItem(variationMatch.id, 1, variationSeleccionada);
-      } else {
-        await addItem(p.id, 1);
+        alert('Producto agregado');
+      } finally {
+        btn.disabled = false;
+        btn.classList.remove('loading');
       }
-      alert('Producto agregado');
     });
     list.appendChild(li);
   });
