@@ -63,13 +63,19 @@ export async function syncLocalCart() {
   if (!getToken()) return;
   const items = getLocalCart();
   for (const item of items) {
+    const variationPayload = item.variation
+      ? Object.entries(item.variation).map(([attribute, value]) => ({
+          attribute,
+          value,
+        }))
+      : undefined;
     await cartRequest(config.endpoints.cartAddItem, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         id: item.id,
         quantity: item.quantity,
-        ...(item.variation ? { variation: item.variation } : {}),
+        ...(variationPayload ? { variation: variationPayload } : {}),
       }),
     });
   }
@@ -96,13 +102,19 @@ export function addItem(productId, quantity, variation) {
     setLocalCart(cart);
     return Promise.resolve({ items: cart });
   }
+  const variationPayload = variation
+    ? Object.entries(variation).map(([attribute, value]) => ({
+        attribute,
+        value,
+      }))
+    : undefined;
   return cartRequest(config.endpoints.cartAddItem, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       id: productId,
       quantity,
-      ...(variation ? { variation } : {}),
+      ...(variationPayload ? { variation: variationPayload } : {}),
     }),
   });
 }
