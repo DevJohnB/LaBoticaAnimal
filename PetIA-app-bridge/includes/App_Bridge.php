@@ -10,6 +10,7 @@ class App_Bridge {
         add_filter( 'determine_current_user', [ $this, 'determine_current_user' ], 20 );
         add_action( 'rest_api_init', [ $this, 'register_routes' ] );
         add_filter( 'rest_authentication_errors', [ $this, 'authenticate_requests' ] );
+        add_filter( 'woocommerce_store_api_disable_nonce_check', '__return_true' );
 
         if ( is_admin() ) {
             new Admin();
