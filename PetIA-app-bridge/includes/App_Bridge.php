@@ -324,12 +324,14 @@ class App_Bridge {
             );
         }
         return [
-            'id'          => $user->ID,
-            'username'    => $user->user_login,
-            'display_name'=> $user->display_name,
-            'email'       => $user->user_email,
-            'first_name'  => $user->first_name,
-            'last_name'   => $user->last_name,
+            'id'              => $user->ID,
+            'username'        => $user->user_login,
+            'display_name'    => $user->display_name,
+            'email'           => $user->user_email,
+            'first_name'      => $user->first_name,
+            'last_name'       => $user->last_name,
+            'billing_address' => $this->get_user_address( $user->ID, 'billing' ),
+            'shipping_address'=> $this->get_user_address( $user->ID, 'shipping' ),
         ];
     }
 
@@ -339,10 +341,12 @@ class App_Bridge {
             return new \WP_Error( 'rest_forbidden', 'Cannot update user.', [ 'status' => rest_authorization_required_code() ] );
         }
 
-        $params     = $request->get_json_params();
-        $first_name = sanitize_text_field( $params['first_name'] ?? '' );
-        $last_name  = sanitize_text_field( $params['last_name'] ?? '' );
-        $email      = sanitize_email( $params['email'] ?? '' );
+        $params           = $request->get_json_params();
+        $first_name       = sanitize_text_field( $params['first_name'] ?? '' );
+        $last_name        = sanitize_text_field( $params['last_name'] ?? '' );
+        $email            = sanitize_email( $params['email'] ?? '' );
+        $billing_address  = $params['billing_address'] ?? [];
+        $shipping_address = $params['shipping_address'] ?? [];
 
         $result = wp_update_user( [
             'ID'         => $user_id,
@@ -355,7 +359,66 @@ class App_Bridge {
             return $result;
         }
 
+        $this->update_user_address( $user_id, 'billing', $billing_address );
+        $this->update_user_address( $user_id, 'shipping', $shipping_address );
+
         return [ 'success' => true ];
+    }
+
+    private function get_user_address( $user_id, $type ) {
+        $fields = [
+            'first_name',
+            'last_name',
+            'company',
+            'address_1',
+            'address_2',
+            'city',
+            'state',
+            'postcode',
+            'country',
+            'email',
+            'phone',
+        ];
+
+        $address = [];
+        if ( class_exists( '\WC_Customer' ) ) {
+            $customer = new \WC_Customer( $user_id );
+            foreach ( $fields as $field ) {
+                $getter = "get_{$type}_{$field}";
+                if ( is_callable( [ $customer, $getter ] ) ) {
+                    $address[ $field ] = $customer->$getter();
+                }
+            }
+        } else {
+            foreach ( $fields as $field ) {
+                $address[ $field ] = get_user_meta( $user_id, "{$type}_{$field}", true );
+            }
+        }
+
+        return $address;
+    }
+
+    private function update_user_address( $user_id, $type, $data ) {
+        $fields = [
+            'first_name',
+            'last_name',
+            'company',
+            'address_1',
+            'address_2',
+            'city',
+            'state',
+            'postcode',
+            'country',
+            'email',
+            'phone',
+        ];
+
+        foreach ( $fields as $field ) {
+            if ( isset( $data[ $field ] ) ) {
+                $value = 'email' === $field ? sanitize_email( $data[ $field ] ) : sanitize_text_field( $data[ $field ] );
+                update_user_meta( $user_id, "{$type}_{$field}", $value );
+            }
+        }
     }
 
     public function handle_order_addresses_get( \WP_REST_Request $request ) {
