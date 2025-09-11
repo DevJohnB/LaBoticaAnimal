@@ -4,6 +4,15 @@ import { addItem } from './cart.js';
 import { ensureAuth } from './token.js';
 import { showToast } from './notifications.js';
 
+function formatCurrency(value) {
+  const number = Number(value);
+  if (Number.isNaN(number)) return '';
+  return new Intl.NumberFormat('es-MX', {
+    style: 'currency',
+    currency: 'MXN',
+  }).format(number);
+}
+
 ensureAuth();
 
 const loadedCategories = new Map();
@@ -41,10 +50,27 @@ function renderProducts(products, panel) {
         attrsHtml += `<label>${attr}<select data-attr="${attr}">${opts}</select></label>`;
       });
     }
+    const minRange = p.price_range?.min ?? p.min_price;
+    const maxRange = p.price_range?.max ?? p.max_price;
+    let priceDisplay;
+    if (
+      typeof minRange !== 'undefined' &&
+      typeof maxRange !== 'undefined' &&
+      Number(minRange) !== Number(maxRange)
+    ) {
+      priceDisplay = `${formatCurrency(minRange)} - ${formatCurrency(maxRange)}`;
+    } else {
+      const singlePrice =
+        p.price ?? p.formatted_price ?? minRange ?? maxRange ?? '';
+      priceDisplay =
+        typeof singlePrice === 'string' && singlePrice.startsWith('$')
+          ? singlePrice
+          : formatCurrency(singlePrice);
+    }
     li.innerHTML = `
       <img src="${p.image}" alt="${p.name}" />
       <div class="name">${p.name}</div>
-      <div class="price">${p.formatted_price ?? p.price}</div>
+      <div class="price">${priceDisplay}</div>
       ${attrsHtml}
       <button class="add-cart">Añadir</button>
     `;
