@@ -46,14 +46,25 @@ function renderProducts(products, panel) {
     `;
     const btn = li.querySelector('.add-cart');
     btn.addEventListener('click', async () => {
-      let variation;
       if (p.type === 'variable' && p.attributes) {
-        variation = {};
+        const variationSeleccionada = {};
         li.querySelectorAll('select[data-attr]').forEach(sel => {
-          variation[sel.dataset.attr] = sel.value;
+          variationSeleccionada[`attribute_${sel.dataset.attr}`] = sel.value;
         });
+        const variationMatch = p.variations?.find(v => {
+          const attrs = v.attributes || {};
+          return Object.entries(variationSeleccionada).every(
+            ([attr, val]) => attrs[attr] === val
+          );
+        });
+        if (!variationMatch) {
+          alert('Variación no encontrada');
+          return;
+        }
+        await addItem(variationMatch.id, 1, variationSeleccionada);
+      } else {
+        await addItem(p.id, 1);
       }
-      await addItem(p.id, 1, variation);
       alert('Producto agregado');
     });
     list.appendChild(li);
