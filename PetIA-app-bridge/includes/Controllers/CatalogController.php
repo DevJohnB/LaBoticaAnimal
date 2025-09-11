@@ -76,6 +76,12 @@ class CatalogController {
                 'type'           => $product->get_type(),
             ];
             if ( 'variable' === $product->get_type() ) {
+                $item['min_price'] = (float) $product->get_variation_price( 'min', true );
+                $item['max_price'] = (float) $product->get_variation_price( 'max', true );
+                if ( function_exists( 'wc_price' ) ) {
+                    $item['formatted_min_price'] = wc_price( $item['min_price'] );
+                    $item['formatted_max_price'] = wc_price( $item['max_price'] );
+                }
                 $attributes = [];
                 foreach ( $product->get_variation_attributes() as $taxonomy => $options ) {
                     $attributes[ $this->normalize_attribute_key( $taxonomy ) ] = array_values( $options );
