@@ -315,8 +315,6 @@ class App_Bridge {
     } catch ( Exception $e ) {
         return new WP_Error('invalid_token', $e->getMessage(), ['status' => 401]);
     }
-
-        //$user = wp_get_current_user();
         if ( 0 === $user->ID ) {
             return new \WP_Error(
                 'authentication_required',
