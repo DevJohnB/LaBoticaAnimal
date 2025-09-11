@@ -25,12 +25,19 @@ class CatalogController {
         if ( ! function_exists( 'get_terms' ) ) {
             return [];
         }
-        $terms = get_terms( [ 'taxonomy' => 'product_cat', 'hide_empty' => false ] );
+        $terms = get_terms(
+            [
+                'taxonomy'   => 'product_cat',
+                'hide_empty' => false,
+                'pad_counts' => true,
+            ]
+        );
         $data  = array_map(
             fn( $t ) => [
                 'id'     => $t->term_id,
                 'name'   => $t->name,
                 'parent' => $t->parent,
+                'count'  => (int) $t->count,
             ],
             $terms
         );
