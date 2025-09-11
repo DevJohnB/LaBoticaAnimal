@@ -122,6 +122,17 @@ ul {
 }
 
 /* Responsive adjustments */
+@media (max-width: 480px) {
+  nav,
+  .tabs {
+    flex-wrap: wrap;
+  }
+
+  .product-list {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (min-width: 600px) {
   body {
     padding: 2rem 4rem;
