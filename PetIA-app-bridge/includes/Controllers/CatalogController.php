@@ -87,13 +87,13 @@ class CatalogController {
                     $attribute_label   = wc_attribute_label( $taxonomy );
                     $attribute_options = [];
                     foreach ( array_values( $options ) as $option ) {
-                        $term              = get_term_by( 'slug', $option, $taxonomy );
+                        $term = get_term_by( 'slug', $option, $taxonomy );
                         $attribute_options[] = [
                             'value' => $option,
                             'label' => $term ? $term->name : $option,
                         ];
                     }
-                    $attributes[ $this->normalize_attribute_key( $taxonomy ) ] = [
+                    $attributes[] = [
                         'label'   => $attribute_label,
                         'options' => $attribute_options,
                     ];
