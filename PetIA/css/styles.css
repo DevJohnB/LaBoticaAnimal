@@ -80,6 +80,21 @@ ul {
   margin-bottom: 1rem;
 }
 
+#breadcrumbs {
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+}
+
+#breadcrumbs span {
+  cursor: pointer;
+  color: #007bff;
+}
+
+#breadcrumbs span:not(:last-child)::after {
+  content: ' > ';
+  color: #333;
+}
+
 .tab {
   cursor: pointer;
   padding: 0.5rem 1rem;
