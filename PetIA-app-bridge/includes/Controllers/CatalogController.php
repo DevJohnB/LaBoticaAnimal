@@ -33,12 +33,17 @@ class CatalogController {
             ]
         );
         $data  = array_map(
-            fn( $t ) => [
-                'id'     => $t->term_id,
-                'name'   => $t->name,
-                'parent' => $t->parent,
-                'count'  => (int) $t->count,
-            ],
+            function( $t ) {
+                $thumb_id  = get_term_meta( $t->term_id, 'thumbnail_id', true );
+                $image_url = $thumb_id ? wp_get_attachment_url( $thumb_id ) : '';
+                return [
+                    'id'     => $t->term_id,
+                    'name'   => $t->name,
+                    'parent' => $t->parent,
+                    'count'  => (int) $t->count,
+                    'image'  => $image_url,
+                ];
+            },
             $terms
         );
         return $data;
