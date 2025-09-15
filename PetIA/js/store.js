@@ -43,11 +43,11 @@ function renderProducts(products, panel) {
     li.className = 'product';
     let attrsHtml = '';
     if (p.type === 'variable' && p.attributes) {
-      Object.entries(p.attributes).forEach(([slug, a]) => {
+      (p.attributes || []).forEach(a => {
         const opts = (a.options || [])
           .map(o => `<option value="${o.value}">${o.label}</option>`)
           .join('');
-        attrsHtml += `<label>${a.label}<select data-attr="${slug}">${opts}</select></label>`;
+        attrsHtml += `<label>${a.label}<select data-attr="${a.slug}">${opts}</select></label>`;
       });
     }
     const minRange = p.price_range?.min ?? p.min_price;
