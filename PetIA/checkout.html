@@ -3,12 +3,16 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="stylesheet" href="css/styles.css" />
-  <link rel="stylesheet" href="css/loading.css" />
-  <title>PetIA Checkout</title>
-</head>
-<body>
-  <nav>
+    <link rel="stylesheet" href="css/styles.css" />
+    <link rel="stylesheet" href="css/loading.css" />
+    <title>PetIA Checkout</title>
+    <script type="module">
+      import { ensureAuth } from './js/token.js';
+      ensureAuth();
+    </script>
+  </head>
+  <body>
+    <nav>
     <a href="chat.html">Chat</a>
     <a href="store.html">Store</a>
     <a href="cart.html">Cart</a>
