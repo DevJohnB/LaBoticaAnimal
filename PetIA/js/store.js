@@ -139,15 +139,7 @@ function renderCategoryLevel(parentId) {
     breadcrumbsEl.appendChild(span);
   });
 
-  if (navigationStack.length > 0) {
-    const back = document.createElement('button');
-    back.textContent = 'Atrás';
-    back.addEventListener('click', () => {
-      const prev = navigationStack.pop();
-      renderCategoryLevel(prev ?? null);
-    });
-    content.appendChild(back);
-  }
+  // Removed back button; navigation relies solely on breadcrumbs.
 
   const cats = allCategories
     .filter(c => (parentId === null ? !c.parent : c.parent === parentId))
