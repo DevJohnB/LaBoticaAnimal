@@ -19,5 +19,7 @@ export default {
     cartAddItem: '/wp-json/petia-app-bridge/v1/wc-store/cart/add-item',
     cartUpdateItem: '/wp-json/petia-app-bridge/v1/wc-store/cart/update-item',
     cartRemoveItem: '/wp-json/petia-app-bridge/v1/wc-store/cart/remove-item',
+    paymentMethods: '/wp-json/petia-app-bridge/v1/wc-store/checkout/payment-methods',
+    checkout: '/wp-json/petia-app-bridge/v1/wc-store/checkout',
   },
 };

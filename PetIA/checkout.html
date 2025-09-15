@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="css/styles.css" />
+  <link rel="stylesheet" href="css/loading.css" />
+  <title>PetIA Checkout</title>
+</head>
+<body>
+  <nav>
+    <a href="chat.html">Chat</a>
+    <a href="store.html">Store</a>
+    <a href="cart.html">Cart</a>
+    <a href="user.html">Profile</a>
+    <a href="#" id="logout-link">Logout</a>
+  </nav>
+  <h1>Checkout</h1>
+  <div class="checkout-container">
+    <form id="checkout-form">
+      <input name="first_name" placeholder="Nombre" required />
+      <input name="last_name" placeholder="Apellidos" required />
+      <input name="address" placeholder="Dirección" required />
+      <input name="city" placeholder="Ciudad" required />
+      <input name="postcode" placeholder="Código Postal" required />
+      <input type="email" name="email" placeholder="Email" required />
+      <select id="payment-method" name="payment_method" required>
+        <option value="">Método de pago</option>
+      </select>
+      <button type="submit">Realizar pedido</button>
+    </form>
+    <div class="cart-summary">
+      <h2>Resumen</h2>
+      <ul id="summary-items"></ul>
+      <p id="summary-total"></p>
+    </div>
+  </div>
+  <p id="checkout-message" class="checkout-message"></p>
+  <script type="module" src="./js/loading.js"></script>
+  <script type="module" src="./js/logout.js"></script>
+  <script type="module" src="./js/checkout.js"></script>
+</body>
+</html>

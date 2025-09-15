@@ -209,3 +209,50 @@ ul {
   text-align: center;
   margin: 1rem 0;
 }
+
+/* Checkout page */
+.checkout-container {
+  display: flex;
+  gap: 2rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.checkout-container form {
+  flex: 1 1 300px;
+  margin: 0;
+}
+
+.cart-summary {
+  border: 1px solid #ccc;
+  padding: 1rem;
+  flex: 1 1 300px;
+}
+
+.cart-summary h2 {
+  margin-bottom: 1rem;
+}
+
+.cart-summary ul {
+  list-style: none;
+  padding: 0;
+  margin-bottom: 1rem;
+}
+
+.cart-summary li {
+  display: flex;
+  justify-content: space-between;
+}
+
+.checkout-message {
+  text-align: center;
+  margin-top: 1rem;
+}
+
+.checkout-message.success {
+  color: green;
+}
+
+.checkout-message.error {
+  color: red;
+}
