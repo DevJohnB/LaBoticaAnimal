@@ -120,6 +120,25 @@ function renderCategoryLevel(parentId) {
   const content = document.getElementById('category-content');
   content.innerHTML = '';
 
+  const breadcrumbsEl = document.getElementById('breadcrumbs');
+  breadcrumbsEl.innerHTML = '';
+
+  const trail = [...navigationStack, parentId];
+  trail.forEach((id, idx) => {
+    const span = document.createElement('span');
+    const cat = allCategories.find(c => c.id === id);
+    span.textContent = cat ? cat.name : 'Inicio';
+
+    if (idx < trail.length - 1) {
+      span.addEventListener('click', () => {
+        navigationStack.splice(idx);
+        renderCategoryLevel(id);
+      });
+    }
+
+    breadcrumbsEl.appendChild(span);
+  });
+
   if (navigationStack.length > 0) {
     const back = document.createElement('button');
     back.textContent = 'Atrás';
