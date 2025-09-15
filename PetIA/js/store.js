@@ -117,9 +117,7 @@ function hasProducts(cat) {
 }
 
 function renderCategoryLevel(parentId) {
-  const tabs = document.getElementById('category-tabs');
   const content = document.getElementById('category-content');
-  tabs.innerHTML = '';
   content.innerHTML = '';
 
   if (navigationStack.length > 0) {
@@ -129,27 +127,34 @@ function renderCategoryLevel(parentId) {
       const prev = navigationStack.pop();
       renderCategoryLevel(prev ?? null);
     });
-    tabs.appendChild(back);
+    content.appendChild(back);
   }
 
-  const cats = allCategories.filter(c =>
-    parentId === null ? !c.parent : c.parent === parentId
-  ).filter(hasProducts);
+  const cats = allCategories
+    .filter(c => (parentId === null ? !c.parent : c.parent === parentId))
+    .filter(hasProducts);
 
   if (cats.length === 0) {
     loadCategoryProducts(parentId);
     return;
   }
 
+  const list = document.createElement('ul');
+  list.className = 'product-list';
+  content.appendChild(list);
+
   cats.forEach(cat => {
-    const tab = document.createElement('div');
-    tab.className = 'tab';
-    tab.textContent = cat.name;
-    tabs.appendChild(tab);
-    tab.addEventListener('click', () => {
+    const li = document.createElement('li');
+    li.className = 'product category';
+    li.innerHTML = `
+      <img src="${cat.image}" alt="${cat.name}" />
+      <div class="name">${cat.name}</div>
+    `;
+    li.addEventListener('click', () => {
       navigationStack.push(parentId);
       renderCategoryLevel(cat.id);
     });
+    list.appendChild(li);
   });
 }
 
