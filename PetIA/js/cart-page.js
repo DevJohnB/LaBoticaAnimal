@@ -76,9 +76,9 @@ async function clearCart(e) {
   }
 }
 
-function checkout() {
-  window.location.href = '/checkout';
-}
+  function checkout() {
+    window.location.href = 'checkout.html';
+  }
 
 document.addEventListener('DOMContentLoaded', () => {
   if (!ensureAuth()) {
