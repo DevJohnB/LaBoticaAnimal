@@ -90,6 +90,7 @@ class CatalogController {
                 $attributes = [];
                 foreach ( $product->get_variation_attributes() as $taxonomy => $options ) {
                     $attribute_label   = wc_attribute_label( $taxonomy );
+                    $slug              = $this->normalize_attribute_key( $taxonomy );
                     $attribute_options = [];
                     foreach ( array_values( $options ) as $option ) {
                         $term = get_term_by( 'slug', $option, $taxonomy );
@@ -99,6 +100,7 @@ class CatalogController {
                         ];
                     }
                     $attributes[] = [
+                        'slug'    => $slug,
                         'label'   => $attribute_label,
                         'options' => $attribute_options,
                     ];
