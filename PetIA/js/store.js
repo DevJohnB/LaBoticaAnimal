@@ -43,11 +43,11 @@ function renderProducts(products, panel) {
     li.className = 'product';
     let attrsHtml = '';
     if (p.type === 'variable' && p.attributes) {
-      p.attributes.forEach(a => {
+      Object.entries(p.attributes).forEach(([slug, a]) => {
         const opts = (a.options || [])
           .map(o => `<option value="${o.value}">${o.label}</option>`)
           .join('');
-        attrsHtml += `<label>${a.label}<select data-attr="${a.slug}">${opts}</select></label>`;
+        attrsHtml += `<label>${a.label}<select data-attr="${slug}">${opts}</select></label>`;
       });
     }
     const minRange = p.price_range?.min ?? p.min_price;
@@ -88,7 +88,7 @@ function renderProducts(products, panel) {
           const variationMatch = p.variations?.find(v => {
             const attrs = v.attributes || {};
             return Object.entries(variationSeleccionada).every(
-              ([attr, val]) => attrs[attr] === val
+              ([slug, val]) => attrs[slug] === val
             );
           });
           if (!variationMatch) {
