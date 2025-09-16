@@ -40,16 +40,89 @@ class UserController {
     }
 
     public function handle_register( \WP_REST_Request $request ) {
-        $params   = $request->get_json_params();
-        $username = sanitize_user( $params['username'] ?? '' );
-        $password = sanitize_text_field( $params['password'] ?? '' );
-        $email    = sanitize_email( $params['email'] ?? '' );
+        $params      = $request->get_json_params();
+        $username    = sanitize_user( $params['username'] ?? '' );
+        $password    = wp_unslash( (string) ( $params['password'] ?? '' ) );
+        $email       = sanitize_email( $params['email'] ?? '' );
+        $first_name  = sanitize_text_field( $params['first_name'] ?? '' );
+        $last_name   = sanitize_text_field( $params['last_name'] ?? '' );
 
-        $user = wp_create_user( $username, $password, $email );
-        if ( is_wp_error( $user ) ) {
-            return $user;
+        if ( '' === $username ) {
+            return new \WP_Error( 'missing_username', 'Username is required', [ 'status' => 400 ] );
         }
-        return [ 'success' => true, 'user_id' => $user ];
+
+        if ( ! validate_username( $username ) ) {
+            return new \WP_Error( 'invalid_username', 'Invalid username', [ 'status' => 400 ] );
+        }
+
+        if ( '' === $email ) {
+            return new \WP_Error( 'missing_email', 'Email is required', [ 'status' => 400 ] );
+        }
+
+        if ( ! is_email( $email ) ) {
+            return new \WP_Error( 'invalid_email', 'Invalid email address', [ 'status' => 400 ] );
+        }
+
+        if ( '' === $password ) {
+            return new \WP_Error( 'missing_password', 'Password is required', [ 'status' => 400 ] );
+        }
+
+        if ( strlen( $password ) < 8 ) {
+            return new \WP_Error( 'weak_password', 'Password must be at least 8 characters long', [ 'status' => 400 ] );
+        }
+
+        if ( username_exists( $username ) ) {
+            return new \WP_Error( 'username_exists', 'Username already exists', [ 'status' => 409 ] );
+        }
+
+        if ( email_exists( $email ) ) {
+            return new \WP_Error( 'email_exists', 'Email already registered', [ 'status' => 409 ] );
+        }
+
+        $user_id = wp_create_user( $username, $password, $email );
+        if ( is_wp_error( $user_id ) ) {
+            return $user_id;
+        }
+
+        $user_update = [ 'ID' => $user_id ];
+        if ( $first_name ) {
+            $user_update['first_name'] = $first_name;
+        }
+        if ( $last_name ) {
+            $user_update['last_name'] = $last_name;
+        }
+
+        if ( count( $user_update ) > 1 ) {
+            $updated = wp_update_user( $user_update );
+            if ( is_wp_error( $updated ) ) {
+                return $updated;
+            }
+        }
+
+        $token = null;
+        try {
+            $token = $this->token_manager->generate_token( $user_id );
+        } catch ( \Throwable $e ) {
+            // If token generation fails, still return a success response without the token.
+        }
+
+        $response_data = [
+            'success' => true,
+            'message' => 'User registered successfully',
+            'user_id' => $user_id,
+        ];
+
+        if ( $token ) {
+            $response_data['token'] = $token;
+        }
+
+        $response = rest_ensure_response( $response_data );
+
+        if ( $token ) {
+            $response->header( 'Authorization', 'Bearer ' . $token );
+        }
+
+        return $response;
     }
 
     public function handle_password_reset_request( \WP_REST_Request $request ) {
