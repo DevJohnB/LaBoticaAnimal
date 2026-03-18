@@ -101,7 +101,10 @@ class UserController {
 
         $token = null;
         try {
-            $token = $this->token_manager->generate_token( $user_id );
+            $generated_token = $this->token_manager->generate_token( $user_id );
+            if ( ! is_wp_error( $generated_token ) ) {
+                $token = $generated_token;
+            }
         } catch ( \Throwable $e ) {
             // If token generation fails, still return a success response without the token.
         }
